@@ -1,0 +1,8 @@
+[package]
+name = "stegano"
+version = "0.1.0"
+authors = ["Mathias Bayon <mathias.bayon@gmail.com>"]
+
+[dependencies]
+rand = "*"
+image = "*"
