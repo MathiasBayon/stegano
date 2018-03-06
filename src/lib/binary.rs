@@ -23,6 +23,7 @@ pub mod binary {
     }
 
     /// Store random bit in byte (Input parameter)
+    #[ignore(dead_code)]
     pub fn store_random_bit_in_u8(number: &mut u8) {
         let random_bit_value = rand::thread_rng().gen_range(0, 2);
 
@@ -34,7 +35,7 @@ pub mod binary {
     /// Converts byte (input) into a boolean (~= binary) vector
     fn convert_u8_to_bit_vec(byte: u8) -> Vec<bool> {
         // Convert input byte to binary string
-        let mut byte_in_binary:String = format!("{:08b}", byte);
+        let mut byte_in_binary: String = format!("{:08b}", byte);
 
         // Initializing output vector
         let mut result_binary_array = Vec::<bool>::new();
@@ -57,15 +58,15 @@ pub mod binary {
         // Map '0' and '1' chars to 0s and 1s
         // Fold the whole "byte-string" into a number
         // And return it 
-        slice.chars().map(|x| match x { '1' => 1, _ => 0}).rev().fold(0, |acc, b| acc*2 + b as u8)
+        slice.chars().map(|x| match x { '1' => 1, _ => 0}).rev().fold(0, |acc, b| acc * 2 + b as u8)
     }
 
     /// Convert boolean (~= binary) vector into String
     pub fn convert_bit_vec_to_message(bit_vec: &Vec<bool>) -> String {
         let mut byte_as_string;          // Byte to string conversion variable
-        let mut read_char:char;          // Parsed char
+        let mut read_char: char;          // Parsed char
         let mut result = String::new();  // Output String
-        let mut read_byte_slice:&[bool]; // input vector parser
+        let mut read_byte_slice: &[bool]; // input vector parser
         let mut last_index = 0;          // Parsing head position
 
         // Parse boolean (~= binary) vector until end

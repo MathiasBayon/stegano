@@ -4,7 +4,7 @@ use self::lib::binary::binary;
 
 fn main() {
     let mut image = DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test.png");
-    image.encode("Hello");
+    image.encode("Hello").unwrap();
 
     println!("{:?}", image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test2.png"));
 
@@ -12,7 +12,7 @@ fn main() {
     println!("{:?}", vector);
 
     let image2 = DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test2.png");
-    let res = image2.decode();
+    let res = image2.decode().unwrap();
 
     println!("{}", res);
 }
