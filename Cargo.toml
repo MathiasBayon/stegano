@@ -6,3 +6,4 @@ authors = ["Mathias Bayon <mathias.bayon@gmail.com>"]
 [dependencies]
 rand = "*"
 image = "*"
+rust-crypto ="*"

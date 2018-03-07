@@ -8,6 +8,7 @@ pub mod dot_matrix {
     use std::fs::File;
 
     use lib::binary::*;
+    use lib::cypher::*;
 
     const ENDING_CHAR: char = '#';
 
@@ -34,11 +35,13 @@ pub mod dot_matrix {
         }
 
         /// Accessor returning picture's filepath
+        #[allow(dead_code)]
         pub fn get_input_filepath(&self) -> String {
             self.input_filepath.to_string()
         }
 
         /// Setter allowing the user to change the source picture
+        #[allow(dead_code)]
         pub fn read_from_file(&mut self, filepath: &str) {
             self.input_filepath = filepath.to_string();
             self.image = image::open(filepath).unwrap();
@@ -59,7 +62,7 @@ pub mod dot_matrix {
             let mut blue = pixel.to_rgb()[2];
 
             // Then binary-OR it with the boolean input values
-            // If the end of the encrypting message is reached,
+            // If the end of the encryption message is reached,
             // then the bit array may have less than 3 elements, so, store what is storable
             if bits.len() >= 1 {
                 binary::store_bit_in_u8(&mut red, bits[0]);
@@ -88,9 +91,10 @@ pub mod dot_matrix {
 
         /// Append ending character to message
         /// TODO : Transform into static function
-        fn get_msg_w_ending_character(&self, message: &str) -> String {
-            let mut message2 = message.to_string();
-            message2.push(ENDING_CHAR);
+        /// TODO : Correct ugly cast
+        fn get_vector_w_ending_char(&self, message: &Vec<u8>) -> Vec<u8>{
+            let mut message2 = message.clone();
+            message2.push(ENDING_CHAR as u8);
             message2
         }
 
@@ -109,13 +113,43 @@ pub mod dot_matrix {
             self.get_dimensions().0 * self.get_dimensions().1 > message_len
         }
 
+        fn store_random_from(&mut self, x: u32, y: u32) {
+            // Shadow x and y into local mutable variables
+            let mut x = x.clone();
+            let mut y = y.clone();
+
+            // Ensure to stays within picture boundaries
+            while self.y_in_dimensions(y) {
+                while self.x_in_dimensions(x) {
+                    let ref mut pixel = self.image.get_pixel(x, y);
+                    let mut red = pixel.to_rgb()[0];
+                    let mut green = pixel.to_rgb()[1];
+                    let mut blue = pixel.to_rgb()[2];
+
+                    binary::store_random_bit_in_u8(&mut red);
+                    binary::store_random_bit_in_u8(&mut green);
+                    binary::store_random_bit_in_u8(&mut blue);
+
+                    // Create new pixel from altered RGB values and put it in image
+                    // Alpha is not altered
+                    self.image.put_pixel(x, y, image::Rgba([red, green, blue, pixel[3]]));
+
+                    x += 1;
+                }
+
+                y += 1;
+                x = 0;
+            }
+        }
+
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str) -> Result<&str, &str> {
             // Add ending charadter to input message
-            let message_w_ending_character = self.get_msg_w_ending_character(message);
+            let encryp = cypher::simple_encrypt(message);
+            let message_w_ending_character = self.get_vector_w_ending_char(&encryp);
 
             // Convert message to binary vetor
-            let vector = binary::convert_message_to_bit_vec(message_w_ending_character);
+            let vector = binary::convert_u8_vec_to_bit_vec(&message_w_ending_character);
             
             // Get binary vector length
             let message_length = vector.len();
@@ -139,6 +173,14 @@ pub mod dot_matrix {
                     if parsing_cursor+2 > message_length {
                         // If so, dump remaining vector bits into last pixel
                         self.store_3bits_at(x, y, &vector[parsing_cursor..]);
+
+                        // Store random things to hide picture alteration from picture analysers
+                        if self.x_in_dimensions(x+1) {
+                            self.store_random_from(x+1, y);
+                        } else if self.y_in_dimensions(y+1) {
+                            self.store_random_from(0, y+1);
+                        }
+
                         return Ok("Done"); // Hell yeah, it's finished !
                     }
                     // If not, store 3 bits in current pixel
@@ -172,7 +214,7 @@ pub mod dot_matrix {
             let mut charac;
 
             // The message hidden in picture
-            let mut message = String::new();
+            let mut message = Vec::<u8>::new();
 
             // Keep cursor within picture boundaries
             while self.y_in_dimensions(y) {
@@ -189,13 +231,14 @@ pub mod dot_matrix {
                         remains_of_previous_bit_vector.push(self.get_3bits_at(x,y)[2]);
                     } else if boolean_byte_vector.len() == 8 { // Complete byte formed!
                         // Convert byte to character
-                        charac = binary::convert_bit_vec_to_message(&boolean_byte_vector);
+                        charac = binary::convert_bit_vec_to_u8(&boolean_byte_vector);
                         
                         // Check if read character is the ending one
-                        if charac.eq(&ENDING_CHAR.to_string()) {
-                            return Some(message); // If so, return message
+                        if charac == ENDING_CHAR as u8 {
+                            let result = cypher::simple_decrypt(&message);
+                            return Some(result); // If so, return message
                         } else { // Continue fetching pixels to retrieve the missing characters
-                            message.push(charac.chars().next().unwrap());
+                            message.push(charac);
 
                             boolean_byte_vector = Vec::<bool>::new();
                             boolean_byte_vector.append(&mut remains_of_previous_bit_vector);
