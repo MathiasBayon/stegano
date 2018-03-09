@@ -130,7 +130,7 @@ pub mod tests {
 
     #[test]
     fn test_store_random_bit_in_u8() {
-        let mut byte: u8;
+        let mut byte;
         let mut cases = Vec::<u8>::new();
 
         for _ in 0..100 {
@@ -142,8 +142,8 @@ pub mod tests {
         let set: BTreeSet<_> = cases.drain(..).collect();
         let mut set2 = BTreeSet::new();
 
-        let mut value30:u8 = 30;
-        let mut value31:u8 = 31;
+        let value30 = 30;
+        let value31 = 31;
 
         set2.insert(value30);
         set2.insert(value31);
@@ -173,7 +173,7 @@ pub mod tests {
                    , false, false, false, true, true ,true, true, true
                    , false, false, false, true, true ,true, true, true];
                    
-        let mut vec2 = tab2.to_vec();
+        let vec2 = tab2.to_vec();
 
         assert_eq!(binary::convert_u8_vec_to_bit_vec(&vec), vec2);
     }

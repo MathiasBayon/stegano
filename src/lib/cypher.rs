@@ -4,14 +4,12 @@ pub mod cypher {
 
     use self::crypto::{ symmetriccipher, buffer, aes, blockmodes };
     use self::crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
-    use self::crypto::symmetriccipher::SymmetricCipherError;
 
     use std::str;
 
     // Encrypt a buffer with the given key and iv using
     // AES-256/CBC/Pkcs encryption.
     fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
-
         // Create an encryptor instance of the best performing
         // type available for the platform.
         let mut encryptor = aes::cbc_encryptor(
@@ -100,7 +98,7 @@ pub mod cypher {
     }
 
     /// Simple encrypter to encapsulate crypto functions
-    pub fn simple_encrypt(message: &str) -> Result<Vec<u8>, SymmetricCipherError> {
+    pub fn simple_encrypt(message: &str) -> Result<Vec<u8>, &str> {
         let key: [u8; 32] = [0; 32];
         let iv: [u8; 16] = [0; 16];
 
@@ -114,7 +112,10 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        encrypt(&message.as_bytes(), &key, &iv)
+        match encrypt(&message.as_bytes(), &key, &iv) {
+            Ok(ok) => Ok(ok),
+            Err(_) => Err("stegano/simple_encrypt : Unable to encrypt message!")
+        }
     }
     
     /// Simple decrypter§è to encapsulate crypto functions
@@ -138,10 +139,10 @@ pub mod cypher {
             Ok(decrypted_message) => {
                 match str::from_utf8(decrypted_message.as_slice()) {
                     Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
-                    Err(_) => { Err("Unable to convert decrypted message to UTF8") }
+                    Err(_) => { Err("stegano/simple_decrypt : Unable to convert decrypted message to UTF8") }
                 }
             },
-            Err(_) => { Err("Unable to decrypt message") }
+            Err(_) => { Err("stegano/simple_decrypt : Unable to decrypt message") }
         }
     }
 }

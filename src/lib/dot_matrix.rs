@@ -53,33 +53,34 @@ pub mod dot_matrix {
         }
 
         /// Function to write the picture into target unexisting file
-        pub fn write_to_file(&self, filepath: &str) -> Result<&str, &str> {
+        pub fn write_to_file(&self, filepath: &str) -> Result<(), &str> {
             let output_file = File::create(filepath);
             match output_file {
                 Ok(mut output_file_ref) => {
                     match self.image {
                         Ok(ref image_inner) => {
                             match image_inner.save(&mut output_file_ref, image::PNG) {
-                                Ok(_) => Ok("Done"),
-                                Err(_) => Err("nable to save output file!")
+                                Ok(_) => Ok(()),
+                                Err(_) => Err("stegano/write_to_file : Unable to save output file!")
                             }
                         },
-                        Err(_) => Err("Unable to open inner image!")
+                        Err(_) => Err("stegano/write_to_file : Unable to open inner image!")
                     }
                 },
-                Err(_) => Err("Unable to create output file!")
+                Err(_) => Err("stegano/write_to_file : Unable to create output file!")
             }
         }
 
         /// Function to store 3 bits, hidden into pixel at input coordinates
-        fn store_3bits_at(&mut self, x: u32, y: u32, bits: &[bool]) -> Result<&str, &str> {
+        fn store_3bits_at(&mut self, x: u32, y: u32, bits: &[bool]) -> Result<(), &str> {
             // Get the pixel at input coordinates
             let ref mut image_unwraped;
             let pixel;
             
+            // TODO : ???!!!
             match self.image {
                 Ok(ref mut image_unwraped_temp) => image_unwraped = image_unwraped_temp,
-                Err(_) => return Err("Unable to open inner image!")
+                Err(_) => return Err("stegano/store_3bits_at : Unable to open inner image!")
             }
 
             pixel = image_unwraped.get_pixel(x, y);
@@ -105,7 +106,8 @@ pub mod dot_matrix {
             // Create new pixel from altered RGB values and put it in image
             // Alpha is not altered
             image_unwraped.put_pixel(x, y, image::Rgba([red, green, blue, pixel[3]]));
-            Ok("Done")
+            
+            Ok(())
         }
 
         /// Returns bits stored in pixel, at given position
@@ -114,7 +116,7 @@ pub mod dot_matrix {
             
             match self.image {
                 Ok(ref image_unwraped) => { pixel = image_unwraped.get_pixel(x, y); },
-                Err(_) => return Err("Unable to get pixel at coordinates")
+                Err(_) => return Err("stegano/get_3bits_at :Unable to get pixel at coordinates")
             }
 
             // Use modulo to know whether value is odd or not
@@ -149,7 +151,7 @@ pub mod dot_matrix {
         }
 
         /// Store random bits from input x and y coordinates, to hide encrypted message length
-        fn store_random_from(&mut self, x: u32, y: u32) -> Result<&str, &str> {
+        fn store_random_from(&mut self, x: u32, y: u32) -> Result<(), &str> {
             // Shadow x and y into local mutable variables
             let mut x = x.clone();
             let mut y = y.clone();
@@ -158,7 +160,7 @@ pub mod dot_matrix {
 
             match self.image {
                 Ok(ref mut image_unwraped_temp) => image_unwraped = image_unwraped_temp,
-                Err(_) => return Err("Unable to open inner image!")
+                Err(_) => return Err("stegano/store_random_from : Unable to open inner image!")
             }
 
             let dimension_x = image_unwraped.dimensions().0;
@@ -189,11 +191,11 @@ pub mod dot_matrix {
                 x = 0;
             }
 
-            Ok("Done")
+            Ok(())
         }
 
         /// Encode given message in self image
-        pub fn encode(&mut self, message: &str) -> Result<&str, &str> {
+        pub fn encode(&mut self, message: &str) -> Result<(), &str> {
             // Add ending charadter to input message
             let encrypted_message = cypher::simple_encrypt(message);
             let message_w_ending_character;
@@ -203,7 +205,7 @@ pub mod dot_matrix {
                    message_w_ending_character = self.get_vector_w_ending_char(&encrypted_message);
                 },
                 Err(_) => {
-                    return Err("Unable to encrypt message!");
+                    return Err("stegano/encode : Unable to encrypt message!");
                 }
             }
 
@@ -214,7 +216,9 @@ pub mod dot_matrix {
             let message_length = vector.len();
             
             // Check if picture is big enoug to store binary vector
-            if !self.is_big_enough_to_store_message(message_length as u32) { return Err("Input file not big enough to store message!"); }
+            if !self.is_big_enough_to_store_message(message_length as u32) {
+                return Err("stegano/encode : Input file not big enough to store message!");
+            }
             
             // Position indexes
             let mut x = 0;
@@ -233,28 +237,28 @@ pub mod dot_matrix {
                         // If so, dump remaining vector bits into last pixel
                         match self.store_3bits_at(x, y, &vector[parsing_cursor..]) {
                             Ok(_) => {},
-                            Err(_) => return Err("Unable to encrypt message!")
+                            Err(_) => return Err("stegano/encode : Unable to encrypt message!")
                         }
 
                         // Store random things to hide picture alteration from picture analysers
                         if self.x_in_dimensions(x+1) {
                             match self.store_random_from(x+1, y) {
                                 Ok(_) => {},
-                                Err(_) => return Err("Unable to store random data in image")
+                                Err(_) => return Err("stegano/encode : Unable to store random data in image")
                             }
                         } else if self.y_in_dimensions(y+1) {
                             match self.store_random_from(0, y+1) {
                                 Ok(_) => {},
-                                Err(_) => return Err("Unable to store random data in image")
+                                Err(_) => return Err("stegano/encode : Unable to store random data in image")
                             }
                         }
 
-                        return Ok("Done"); // Hell yeah, it's finished !
+                        return Ok(()); // Hell yeah, it's finished !
                     }
                     // If not, store 3 bits in current pixel
                     match self.store_3bits_at(x,y, &vector[parsing_cursor..parsing_cursor+3]) {
                         Ok(_) => {},
-                        Err(_) => return Err("Unable to store data in image")
+                        Err(_) => return Err("stegano/encode : Unable to store data in image")
                     }
 
                     x += 1;
@@ -266,7 +270,7 @@ pub mod dot_matrix {
                 x = 0;
             }
 
-            return Err("Input file not big enough to store message"); // Should not happen
+            Err("stegano/encode : Input file not big enough to store message") // Should not happen
         }
 
         /// Decodes image and return result string
@@ -294,7 +298,7 @@ pub mod dot_matrix {
                 while self.x_in_dimensions(x) {
                     match self.get_3bits_at(x,y) {
                         Ok(pixel_unwraped_temp) => { pixel_unwraped = pixel_unwraped_temp }
-                        Err(_) => { return Err("Unable to retrieve pixel!") }
+                        Err(_) => { return Err("stegano/decode : Unable to retrieve pixel!") }
                     }
                     
                     // TODO : Refactor <here>, ugly code spotted
@@ -316,7 +320,7 @@ pub mod dot_matrix {
 
                             match result {
                                 Ok(result) => { return Ok(result) },
-                                Err(_) => { return Err("Unable to decrypt message!") }
+                                Err(_) => { return Err("stegano/decode :Unable to decrypt message!") }
                             }
                         } else { // Continue fetching pixels to retrieve the missing characters
                             message.push(charac);
@@ -344,9 +348,30 @@ pub mod dot_matrix {
                 x = 0;
             }
 
-        return Err("Nothing hidden in this file!"); // Ending character never reached, return None
+        Err("stegano/decode : Nothing hidden in this file!") // Ending character never reached, return None
         }
     }
 }
 
 // TODO tests
+// Tests
+#[cfg(test)]
+pub mod tests {
+    use super::dot_matrix;
+
+    #[test]
+    // TODO : unable to store special characters
+    // TODO : errors triggering in a very unuseful order
+    fn test_global() {
+        // TODO : relative path
+        let mut image = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
+        image.encode("Hello, how is the weather today").unwrap();
+
+        assert_eq!(image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png"), Ok(()));
+
+        let image2 = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+        let res = image2.decode().unwrap();
+
+        assert_eq!(res, "Hello, how is the weather today".to_string());
+    }
+}
