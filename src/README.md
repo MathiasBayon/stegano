@@ -1,4 +1,4 @@
-= Steganographic utility =
+# Steganographic utility
 
 * Able to crypt and hide messages within pictures, without visually altering them
 * Message are cyphered before beeing written in the picture
