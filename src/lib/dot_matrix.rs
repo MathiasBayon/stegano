@@ -203,6 +203,12 @@ pub mod dot_matrix {
 
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), &str> {
+            if !message.is_ascii() { return Err("Input message must be ASCII") }
+            if !password.is_ascii() { return Err("Input password must be ASCII") }
+            if message.contains(",;:=?./+ù`%£^$¨*-_°&@#‰|)àç!è§('<>Êêaæî") {
+                return Err("Input message must not contain special characters")
+            }
+
             // Add ending charadter to input message
             let encrypted_message = cypher::simple_encrypt(message, password);
             let message_w_ending_character;
@@ -282,6 +288,8 @@ pub mod dot_matrix {
 
         /// Decodes image and return result string
         pub fn decode(&self, password: &str) -> Result<String, &str> {
+            if !password.is_ascii() { return Err("Input password must be ASCII") }
+
             // Position indexes
             let mut x = 0;
             let mut y = 0;
