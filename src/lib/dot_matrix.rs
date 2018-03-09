@@ -194,6 +194,13 @@ pub mod dot_matrix {
             Ok(())
         }
 
+        // TODO : static
+        fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&self, vector: &mut Vec<bool>, bool_triplet: &[bool;3], n: usize, m: usize) {
+            for i in n..m+1 {
+                vector.push(bool_triplet[i]);
+            }
+        }
+
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str) -> Result<(), &str> {
             // Add ending charadter to input message
@@ -279,7 +286,7 @@ pub mod dot_matrix {
             let mut x = 0;
             let mut y = 0;
 
-            let mut pixel_unwraped;
+            let mut bool_triplet_unwraped;
 
             // Vector containing consolidated bits, before conversion in byte, then in char
             let mut boolean_byte_vector = Vec::<bool>::new();
@@ -297,19 +304,16 @@ pub mod dot_matrix {
             while self.y_in_dimensions(y) {
                 while self.x_in_dimensions(x) {
                     match self.get_3bits_at(x,y) {
-                        Ok(pixel_unwraped_temp) => { pixel_unwraped = pixel_unwraped_temp }
+                        Ok(bool_triplet_temp) => { bool_triplet_unwraped = bool_triplet_temp }
                         Err(_) => { return Err("stegano/decode : Unable to retrieve pixel!") }
                     }
                     
-                    // TODO : Refactor <here>, ugly code spotted
                     if boolean_byte_vector.len() == 6 {
-                        boolean_byte_vector.push(pixel_unwraped[0]);
-                        boolean_byte_vector.push(pixel_unwraped[1]);
-                        remains_of_previous_bit_vector.push(pixel_unwraped[2]);
+                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 1);
+                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 2, 2);
                     } else if boolean_byte_vector.len() == 7 {
-                        boolean_byte_vector.push(pixel_unwraped[0]);
-                        remains_of_previous_bit_vector.push(pixel_unwraped[1]);
-                        remains_of_previous_bit_vector.push(pixel_unwraped[2]);
+                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 0);
+                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 1, 2);
                     } else if boolean_byte_vector.len() == 8 { // Complete byte formed!
                         // Convert byte to character
                         charac = binary::convert_bit_vec_to_u8(&boolean_byte_vector);
@@ -330,14 +334,10 @@ pub mod dot_matrix {
 
                             remains_of_previous_bit_vector = Vec::<bool>::new();
 
-                            boolean_byte_vector.push(pixel_unwraped[0]);
-                            boolean_byte_vector.push(pixel_unwraped[1]);
-                            boolean_byte_vector.push(pixel_unwraped[2]);
+                            self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
                         }
                     } else {
-                        boolean_byte_vector.push(pixel_unwraped[0]);
-                        boolean_byte_vector.push(pixel_unwraped[1]);
-                        boolean_byte_vector.push(pixel_unwraped[2]);
+                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
                     }
                     
                     x += 1;
