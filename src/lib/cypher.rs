@@ -4,6 +4,7 @@ pub mod cypher {
 
     use self::crypto::{ symmetriccipher, buffer, aes, blockmodes };
     use self::crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
+    use self::crypto::symmetriccipher::SymmetricCipherError;
 
     use std::str;
 
@@ -98,7 +99,8 @@ pub mod cypher {
         Ok(final_result)
     }
 
-    pub fn simple_encrypt(message: &str) -> Vec<u8> {
+    /// Simple encrypter to encapsulate crypto functions
+    pub fn simple_encrypt(message: &str) -> Result<Vec<u8>, SymmetricCipherError> {
         let key: [u8; 32] = [0; 32];
         let iv: [u8; 16] = [0; 16];
 
@@ -112,10 +114,11 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        encrypt(&message.as_bytes(), &key, &iv).ok().unwrap()
+        encrypt(&message.as_bytes(), &key, &iv)
     }
     
-    pub fn simple_decrypt(vector: &Vec<u8>) -> String {
+    /// Simple decrypter§è to encapsulate crypto functions
+    pub fn simple_decrypt(vector: &Vec<u8>) -> Result<String, &str> {
         let key: [u8; 32] = [0; 32];
         let iv: [u8; 16] = [0; 16];
 
@@ -131,19 +134,27 @@ pub mod cypher {
 
         println!("vec {:?}", vector);
 
-        let decrypted_message = decrypt(vector, &key, &iv).unwrap();
-
-        str::from_utf8(decrypted_message.as_slice()).unwrap().to_string()
+        match decrypt(vector, &key, &iv) {
+            Ok(decrypted_message) => {
+                match str::from_utf8(decrypted_message.as_slice()) {
+                    Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
+                    Err(_) => { Err("Unable to convert decrypted message to UTF8") }
+                }
+            },
+            Err(_) => { Err("Unable to decrypt message") }
+        }
     }
 }
 
-#[cfg(test)] // on compile si jamais on est en mode "test"
+// Tests
+#[cfg(test)]
 pub mod tests {
     use super::cypher;
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted = cypher::simple_encrypt("Test !");
-        assert_eq!(cypher::simple_decrypt(&encrypted), "Test !");
+        let encrypted = cypher::simple_encrypt("Test !").unwrap();
+
+        assert_eq!(cypher::simple_decrypt(&encrypted), Ok("Test !".to_string()));
     }
 }

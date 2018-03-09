@@ -54,12 +54,12 @@ pub mod binary {
     }
 
     /// Convert binary byte looking input string to byte
-    pub fn convert_bit_string_to_u8_char(slice: String) -> u8 {
+    pub fn convert_bit_string_to_u8_char(bit_string: String) -> u8 {
         // Slice the string into chars
         // Map '0' and '1' chars to 0s and 1s
         // Fold the whole "byte-string" into a number
         // And return it 
-        slice.chars().map(|x| match x { '1' => 1, _ => 0 }).fold(0, |acc, b| acc * 2 + b as u8)
+        bit_string.chars().map(|x| match x { '1' => 1, _ => 0 }).fold(0, |acc, b| acc * 2 + b as u8)
     }
 
     /// Convert u8 vector into boolean (~= binary) vector
@@ -102,7 +102,8 @@ pub mod binary {
     }
 }
 
-#[cfg(test)] // on compile si jamais on est en mode "test"
+// Tests
+#[cfg(test)]
 pub mod tests {
     use std::collections::BTreeSet;
     use super::binary;
@@ -141,11 +142,11 @@ pub mod tests {
         let set: BTreeSet<_> = cases.drain(..).collect();
         let mut set2 = BTreeSet::new();
 
-        let mut value1:u8 = 30;
-        let mut value2:u8 = 31;
+        let mut value30:u8 = 30;
+        let mut value31:u8 = 31;
 
-        set2.insert(value1);
-        set2.insert(value2);
+        set2.insert(value30);
+        set2.insert(value31);
 
         assert_eq!(set, set2);
     }
@@ -171,6 +172,7 @@ pub mod tests {
         let tab2 = [ false, false, false, true, true ,true, true, true
                    , false, false, false, true, true ,true, true, true
                    , false, false, false, true, true ,true, true, true];
+                   
         let mut vec2 = tab2.to_vec();
 
         assert_eq!(binary::convert_u8_vec_to_bit_vec(&vec), vec2);
@@ -179,6 +181,7 @@ pub mod tests {
     #[test]
     fn test_convert_bit_vec_to_u8() {
         let tab = [false, false, false, true, true, true, true, true];
+
         let vec = &tab.to_vec();
 
         assert_eq!(binary::convert_bit_vec_to_u8(&vec), 31);
