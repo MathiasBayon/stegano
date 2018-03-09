@@ -205,6 +205,8 @@ pub mod dot_matrix {
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), &str> {
             if !message.is_ascii() { return Err("Input message must be ASCII") }
             if !password.is_ascii() { return Err("Input password must be ASCII") }
+
+            // TODO : to improve
             if message.contains(",;:=?./+ù`%£^$¨*-_°&@#‰|)àç!è§('<>Êêaæî") {
                 return Err("Input message must not contain special characters")
             }
