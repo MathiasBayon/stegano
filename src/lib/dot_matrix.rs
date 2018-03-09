@@ -12,7 +12,7 @@ pub mod dot_matrix {
     use lib::cypher::*;
 
     // TODO : put this in external file, or as input parameter
-    const ENDING_CHAR: char = '#';
+    const ENDING_CHAR: char = '‰';
 
     /// Basic structure : a DynamicImage and a filepath
     pub struct DotMatrix {
@@ -202,9 +202,9 @@ pub mod dot_matrix {
         }
 
         /// Encode given message in self image
-        pub fn encode(&mut self, message: &str) -> Result<(), &str> {
+        pub fn encode(&mut self, message: &str, password: &str) -> Result<(), &str> {
             // Add ending charadter to input message
-            let encrypted_message = cypher::simple_encrypt(message);
+            let encrypted_message = cypher::simple_encrypt(message, password);
             let message_w_ending_character;
             
             match encrypted_message {
@@ -281,7 +281,7 @@ pub mod dot_matrix {
         }
 
         /// Decodes image and return result string
-        pub fn decode(&self) -> Result<String, &str> {
+        pub fn decode(&self, password: &str) -> Result<String, &str> {
             // Position indexes
             let mut x = 0;
             let mut y = 0;
@@ -320,7 +320,7 @@ pub mod dot_matrix {
                         
                         // Check if read character is the ending one
                         if charac == ENDING_CHAR as u8 {
-                            let result = cypher::simple_decrypt(&message);
+                            let result = cypher::simple_decrypt(&message, password);
 
                             match result {
                                 Ok(result) => { return Ok(result) },
@@ -365,12 +365,12 @@ pub mod tests {
     fn test_global() {
         // TODO : relative path
         let mut image = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
-        image.encode("Hello, how is the weather today").unwrap();
+        image.encode("Hello, how is the weather today", "Pass").unwrap();
 
         assert_eq!(image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png"), Ok(()));
 
         let image2 = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
-        let res = image2.decode().unwrap();
+        let res = image2.decode("Pass").unwrap();
 
         assert_eq!(res, "Hello, how is the weather today".to_string());
     }

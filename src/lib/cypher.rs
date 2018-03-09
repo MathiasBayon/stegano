@@ -98,9 +98,9 @@ pub mod cypher {
     }
 
     /// Simple encrypter to encapsulate crypto functions
-    pub fn simple_encrypt(message: &str) -> Result<Vec<u8>, &str> {
-        let key: [u8; 32] = [0; 32];
+    pub fn simple_encrypt(message: &str, password: &str) -> Result<Vec<u8>, &'static str> {
         let iv: [u8; 16] = [0; 16];
+        let key = password.as_bytes();
 
         // In a real program, the key and iv may be determined
         // using some other mechanism. If a password is to be used
@@ -119,9 +119,9 @@ pub mod cypher {
     }
     
     /// Simple decrypter§è to encapsulate crypto functions
-    pub fn simple_decrypt(vector: &Vec<u8>) -> Result<String, &str> {
-        let key: [u8; 32] = [0; 32];
+    pub fn simple_decrypt(vector: &Vec<u8>, password: &str) -> Result<String, &'static str> {
         let iv: [u8; 16] = [0; 16];
+        let key = password.as_bytes();
 
         // In a real program, the key and iv may be determined
         // using some other mechanism. If a password is to be used
@@ -154,8 +154,8 @@ pub mod tests {
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted = cypher::simple_encrypt("Test !").unwrap();
+        let encrypted = cypher::simple_encrypt("Hello, how is the weather today", "Pass").unwrap();
 
-        assert_eq!(cypher::simple_decrypt(&encrypted), Ok("Test !".to_string()));
+        assert_eq!(cypher::simple_decrypt(&encrypted, "Pass"), Ok("Hello, how is the weather today".to_string()));
     }
 }
