@@ -334,7 +334,7 @@ pub mod dot_matrix {
 
                             match result {
                                 Ok(result) => { return Ok(result) },
-                                Err(_) => { return Err("stegano/decode :Unable to decrypt message!") }
+                                Err(_) => { return Err("stegano/decode : Unable to decrypt message!") }
                             }
                         } else { // Continue fetching pixels to retrieve the missing characters
                             message.push(charac);

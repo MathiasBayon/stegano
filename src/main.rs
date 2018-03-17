@@ -1,14 +1,37 @@
 mod lib;
 use self::lib::dot_matrix::dot_matrix::DotMatrix;
+use std::io::{ stdin,stdout,Write };
 
 fn main() {
-    let mut image = DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
-    image.encode("Hello", "Pass").unwrap();
+    let mut input = String::new();
+    let mut output = String::new();
+    let mut message = String::new();
+    let mut password = String::new();
 
-    image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+    print!("Please enter input file path : ");
+    let _ = stdout().flush();
+    stdin().read_line(&mut input).expect("Did not enter a correct string");
 
-    let image2 = DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
-    let res = image2.decode("Pass").unwrap();
+    print!("Please enter message : ");
+    let _ = stdout().flush();
+    stdin().read_line(&mut message).expect("Did not enter a correct string");
 
-    println!("{}", res);
+    print!("Please enter password : ");
+    let _ = stdout().flush();
+    stdin().read_line(&mut password).expect("Did not enter a correct string");
+
+    print!("Please enter output file path : ");
+    let _ = stdout().flush();
+    stdin().read_line(&mut output).expect("Did not enter a correct string");
+
+    let mut input_file = DotMatrix::new(input.trim());
+    let _ = input_file.encode(message.trim(), password.trim());
+    let _ = input_file.write_to_file(output.trim());
+    let output_file = DotMatrix::new(output.trim());
+    let res = output_file.decode(password.trim());
+
+    match res {
+        Ok(res2) => println!("{}",res2),
+        Err(error) => println!("{}",error)
+    }
 }

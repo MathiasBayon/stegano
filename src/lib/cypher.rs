@@ -100,7 +100,6 @@ pub mod cypher {
     /// Simple encrypter to encapsulate crypto functions
     pub fn simple_encrypt(message: &str, password: &str) -> Result<Vec<u8>, &'static str> {
         let iv: [u8; 16] = [0; 16];
-        let key = password.as_bytes();
 
         // In a real program, the key and iv may be determined
         // using some other mechanism. If a password is to be used
@@ -112,16 +111,16 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        match encrypt(&message.as_bytes(), &key, &iv) {
+        // TODO : Variabilize password. Don't know why this does not work
+        match encrypt(&message.as_bytes(), "Blob".as_bytes(), &iv) {
             Ok(ok) => Ok(ok),
             Err(_) => Err("stegano/simple_encrypt : Unable to encrypt message!")
         }
     }
     
-    /// Simple decrypter§è to encapsulate crypto functions
+    /// Simple decrypter to encapsulate crypto functions
     pub fn simple_decrypt(vector: &Vec<u8>, password: &str) -> Result<String, &'static str> {
         let iv: [u8; 16] = [0; 16];
-        let key = password.as_bytes();
 
         // In a real program, the key and iv may be determined
         // using some other mechanism. If a password is to be used
@@ -133,9 +132,8 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        println!("vec {:?}", vector);
-
-        match decrypt(vector, &key, &iv) {
+        // TODO : Variabilize password. Don't know why this does not work
+        match decrypt(vector, "Blob".as_bytes(), &iv) {
             Ok(decrypted_message) => {
                 match str::from_utf8(decrypted_message.as_slice()) {
                     Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
