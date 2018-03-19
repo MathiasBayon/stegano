@@ -4,8 +4,10 @@ pub mod cypher {
 
     use self::crypto::{ symmetriccipher, buffer, aes, blockmodes };
     use self::crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
+    use self::crypto::bcrypt_pbkdf::{ bcrypt_pbkdf };
 
     use std::str;
+    use std::cmp;
 
     // Encrypt a buffer with the given key and iv using
     // AES-256/CBC/Pkcs encryption.
@@ -111,8 +113,14 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        // TODO : Variabilize password. Don't know why this does not work
-        match encrypt(&message.as_bytes(), "Blob".as_bytes(), &iv) {
+        let mut pass_256:[u8;64] = [0;64];
+        for i in 0..cmp::min(password.as_bytes().len(), 64) {
+            pass_256[i] = password.as_bytes()[i];
+        }
+
+        bcrypt_pbkdf(password.as_bytes(), b"salt", 2, &mut pass_256);
+
+        match encrypt(&message.as_bytes(), &pass_256, &iv) {
             Ok(ok) => Ok(ok),
             Err(_) => Err("stegano/simple_encrypt : Unable to encrypt message!")
         }
@@ -132,8 +140,14 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        // TODO : Variabilize password. Don't know why this does not work
-        match decrypt(vector, "Blob".as_bytes(), &iv) {
+        let mut pass_256:[u8;64] = [0;64];
+        for i in 0..cmp::min(password.as_bytes().len(), 64) {
+            pass_256[i] = password.as_bytes()[i];
+        }
+
+        bcrypt_pbkdf(password.as_bytes(), b"salt", 2, &mut pass_256);
+
+        match decrypt(vector, &pass_256, &iv) {
             Ok(decrypted_message) => {
                 match str::from_utf8(decrypted_message.as_slice()) {
                     Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
