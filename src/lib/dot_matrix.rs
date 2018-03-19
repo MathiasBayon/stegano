@@ -205,6 +205,7 @@ pub mod dot_matrix {
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), &str> {
             if !message.is_ascii() { return Err("Input message must be ASCII") }
             if !password.is_ascii() { return Err("Input password must be ASCII") }
+            if password.len() < 8 { return Err("Input password must be at least 8 letters long") }
 
             // TODO : to improve
             if message.contains(",;:=?./+ù`%£^$¨*-_°&@#‰|)àç!è§('<>Êêaæî") {
@@ -375,12 +376,12 @@ pub mod tests {
     fn test_global() {
         // TODO : relative path
         let mut image = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
-        image.encode("Hello, how is the weather today", "Pass").unwrap();
+        image.encode("Hello, how is the weather today", "Passesazeaze").unwrap();
 
         assert_eq!(image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png"), Ok(()));
 
         let image2 = dot_matrix::DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
-        let res = image2.decode("Pass").unwrap();
+        let res = image2.decode("Passesazeaze").unwrap();
 
         assert_eq!(res, "Hello, how is the weather today".to_string());
     }
