@@ -127,9 +127,7 @@ pub mod dot_matrix {
         }
 
         /// Append ending character to message
-        /// TODO : Transform into static function
-        /// TODO : Correct ugly cast
-        fn get_vector_w_ending_char(&self, message: &Vec<u8>) -> Vec<u8>{
+        fn get_vector_w_ending_char(message: &Vec<u8>) -> Vec<u8>{
             let mut message2 = message.clone();
             message2.push(ENDING_CHAR as u8);
             message2
@@ -194,8 +192,7 @@ pub mod dot_matrix {
             Ok(())
         }
 
-        // TODO : static
-        fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&self, vector: &mut Vec<bool>, bool_triplet: &[bool;3], n: usize, m: usize) {
+        fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(vector: &mut Vec<bool>, bool_triplet: &[bool;3], n: usize, m: usize) {
             for i in n..m+1 {
                 vector.push(bool_triplet[i]);
             }
@@ -218,7 +215,7 @@ pub mod dot_matrix {
             
             match encrypted_message {
                 Ok(encrypted_message) => {
-                   message_w_ending_character = self.get_vector_w_ending_char(&encrypted_message);
+                   message_w_ending_character = DotMatrix::get_vector_w_ending_char(&encrypted_message);
                 },
                 Err(_) => {
                     return Err("stegano/encode : Unable to encrypt message!");
@@ -320,11 +317,11 @@ pub mod dot_matrix {
                     }
                     
                     if boolean_byte_vector.len() == 6 {
-                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 1);
-                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 2, 2);
+                        DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 1);
+                        DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 2, 2);
                     } else if boolean_byte_vector.len() == 7 {
-                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 0);
-                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 1, 2);
+                        DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 0);
+                        DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut remains_of_previous_bit_vector, &bool_triplet_unwraped, 1, 2);
                     } else if boolean_byte_vector.len() == 8 { // Complete byte formed!
                         // Convert byte to character
                         charac = binary::convert_bit_vec_to_u8(&boolean_byte_vector);
@@ -345,10 +342,10 @@ pub mod dot_matrix {
 
                             remains_of_previous_bit_vector = Vec::<bool>::new();
 
-                            self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
+                            DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
                         }
                     } else {
-                        self.push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
+                        DotMatrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut boolean_byte_vector, &bool_triplet_unwraped, 0, 2);
                     }
                     
                     x += 1;
@@ -364,7 +361,6 @@ pub mod dot_matrix {
     }
 }
 
-// TODO tests
 // Tests
 #[cfg(test)]
 pub mod tests {
