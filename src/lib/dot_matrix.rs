@@ -245,30 +245,22 @@ pub mod dot_matrix {
 
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), Error> {
-            if !message.is_ascii() {
+            if !binary::is_one_byte_chars_message(message) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
-                    "Input message must be ASCII",
+                    "Input message must be 1 byte chars",
                 ));
             }
-            if !password.is_ascii() {
+            if !binary::is_one_byte_chars_message(password) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
-                    "Input password must be ASCII",
+                    "Input password must be 1 byte chars",
                 ));
             }
             if password.len() < 8 {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
                     "Input password must be at least 8 letters long",
-                ));
-            }
-
-            // TODO : to improve
-            if message.contains(",;:=?./+ù`%£^$¨*-_°&@#‰|)àç!è§('<>Êêaæî") {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    "Input message must not contain special characters",
                 ));
             }
 
@@ -360,10 +352,10 @@ pub mod dot_matrix {
 
         /// Decodes image and return result string
         pub fn decode(&self, password: &str) -> Result<String, Error> {
-            if !password.is_ascii() {
+            if !binary::is_one_byte_chars_message(password) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
-                    "Input password must be ASCII",
+                    "Input password must be 1 byte chars",
                 ));
             }
 
@@ -511,7 +503,7 @@ pub mod tests {
             "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png",
         );
         image
-            .encode("Hello, how is the weather today", "Passesazeaze")
+            .encode("Hello how is the weather today", "Passesazeaze")
             .unwrap();
 
         assert_eq!(
@@ -526,6 +518,6 @@ pub mod tests {
         );
         let res = image2.decode("Passesazeaze").unwrap();
 
-        assert_eq!(res, "Hello, how is the weather today".to_string());
+        assert_eq!(res, "Hello how is the weather today".to_string());
     }
 }

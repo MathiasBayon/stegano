@@ -123,6 +123,14 @@ pub mod binary {
         }
     }
 
+    pub fn is_one_byte_char(chr: &char) -> bool {
+        (*chr as u8) < 128
+    }
+
+    pub fn is_one_byte_chars_message(msg: &str) -> bool {
+        msg.chars().into_iter().all(|c| is_one_byte_char(&c))
+    }
+
     /// Convert Byte vector into boolean (~= binary) vector
     pub fn convert_byte_vec_to_bit_vec(vector: &Vec<Byte>) -> Vec<bool> {
         // Initialize output boolean vector
@@ -254,7 +262,9 @@ pub mod tests {
     #[test]
     fn test_to_string() {
         assert_eq!(
-            Byte::from_str("00011111").expect("Unable to convert bitstring to Byte!").to_string(),
+            Byte::from_str("00011111")
+                .expect("Unable to convert bitstring to Byte!")
+                .to_string(),
             "00011111".to_owned()
         );
     }
@@ -272,10 +282,22 @@ pub mod tests {
     }
 
     #[test]
-    fn convert_u8_vec_to_byte_vec() {
+    fn test_convert_u8_vec_to_byte_vec() {
         let u8_vec = vec![128, 11, 135];
         let byte_vec = vec![Byte::new(128), Byte::new(11), Byte::new(135)];
 
         assert_eq!(binary::convert_u8_vec_to_byte_vec(&u8_vec), byte_vec);
+    }
+
+    #[test]
+    fn test_is_one_byte_char() {
+        assert_eq!(binary::is_one_byte_char(&'A'), true);
+        assert_eq!(binary::is_one_byte_char(&'€'), false);
+    }
+
+    #[test]
+    fn test_is_one_byte_chars_message() {
+        assert_eq!(binary::is_one_byte_chars_message("Very nice message"), true);
+        assert_eq!(binary::is_one_byte_chars_message("Véry ugly méssàge !!!"), false);
     }
 }
