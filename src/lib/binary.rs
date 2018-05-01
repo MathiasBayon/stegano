@@ -1,76 +1,137 @@
+//! Various String / Vec utilities to manage bit streams, via Byte struct abstraction
 pub mod binary {
 
     extern crate rand;
     use self::rand::Rng;
+    use std::{fmt,
+              io::{Error, ErrorKind}};
 
-    /// Sets to 0 the least significant bit of an byte (input parameter)
-    pub fn empty_least_significant_bit_for_byte(byte: &mut u8) {
-        match *byte % 2 {
-            1       => *byte -= 1,    // Minus one to set it empty
-            0 | _   => {}               // Already empty ;-)
-        }
+    /// A Byte, containing a value...
+    #[derive(Debug)]
+    pub struct Byte {
+        value: u8,
     }
 
-    /// Store bit in byte (Input parameters)
-    /// empties least significant one and sets 0 or 1 into it
-    pub fn store_bit_in_u8(byte: &mut u8, bit: bool) {
-        empty_least_significant_bit_for_byte(byte);
-
-        match bit {
-            true    => *byte += 1,
-            false   => {}
+    impl Byte {
+        /// Constructor
+        pub fn new(value: u8) -> Byte {
+            Byte { value: value }
         }
-    }
 
-    /// Store random bit in byte (Input parameter)
-    pub fn store_random_bit_in_u8(number: &mut u8) {
-        empty_least_significant_bit_for_byte(number);
-
-        let random_bit_value = rand::thread_rng().gen_range(0, 2);
-
-        if random_bit_value > 0 {
-            store_bit_in_u8(number, true);
+        /// Public accessor for value
+        pub fn get_value(&self) -> u8 {
+            self.value
         }
-    }
 
-    /// Converts byte (input) into a boolean (~= binary) vector
-    pub fn convert_u8_to_bit_vec(byte: u8) -> Vec<bool> {
-        // Convert input byte to binary string
-        let byte_in_binary: String = format!("{:08b}", byte);
-
-        // Initializing output vector
-        let mut result_binary_array = Vec::<bool>::new();
-
-        // Convert zeroes and ones to booleans and push them into the output vector
-        for (_, c) in byte_in_binary.chars().enumerate() {
-            match c {
-                '1' => result_binary_array.push(true),
-                _   => result_binary_array.push(false)
+        /// Convert binary byte looking input string to byte
+        pub fn from_str(bit_str: &str) -> Result<Byte, Error> {
+            // Slice the string into chars
+            // Map '0' and '1' chars to 0s and 1s
+            // Fold the whole "byte-string" into a number
+            // And return it
+            match bit_str.len() {
+                8 => Ok(Byte {
+                    value: bit_str
+                        .chars()
+                        .map(|x| match x {
+                            '1' => 1,
+                            _ => 0,
+                        })
+                        .fold(0, |acc, b| acc * 2 + b as u8),
+                }),
+                _ => Err(Error::new(
+                    ErrorKind::InvalidData,
+                    "Length different from 8",
+                )),
             }
         }
 
-        // Return output vector
-        result_binary_array
+        /// Convert bit vector into u8 vector
+        pub fn from_bit_vec(bit_vec: &Vec<bool>) -> Result<Byte, Error> {
+            let mut byte_as_string; // Byte to string conversion variable
+
+            // Init or reinit read byte
+            byte_as_string = "".to_string();
+
+            let read_byte_slice = &bit_vec[0..8];
+
+            // convert boolean values to '0' and '1' chars
+            for i in 0..8 {
+                match read_byte_slice[i] {
+                    true => byte_as_string.push('1'),
+                    _ => byte_as_string.push('0'),
+                }
+            }
+
+            // Convert "byte-string" to a ASCII char
+            Byte::from_str(byte_as_string.as_str())
+        }
+
+        /// Sets the least significant bit to 0 (input parameter)
+        pub fn empty_least_significant_bit(&mut self) {
+            match self.value % 2 {
+                1 => self.value -= 1, // Minus one to set it empty
+                0 | _ => {}           // Already empty ;-)
+            }
+        }
+
+        /// Store bit in self (Input parameters)
+        /// empties least significant one and sets 0 or 1 into it
+        pub fn store_bit(&mut self, bit: bool) {
+            self.empty_least_significant_bit();
+
+            match bit {
+                true => self.value += 1,
+                false => {}
+            }
+        }
+
+        /// Store random bit in self (Input parameter)
+        pub fn store_random_bit(&mut self) {
+            self.empty_least_significant_bit();
+
+            let random_bit_value = rand::thread_rng().gen_range(0, 2);
+
+            if random_bit_value > 0 {
+                self.store_bit(true);
+            }
+        }
+
+        /// Converts self into a boolean (~= binary) vector
+        pub fn to_bit_vec(&self) -> Vec<bool> {
+            // Convert input byte to binary string
+            let byte_in_binary: String = format!("{:08b}", self.value);
+
+            // Initializing output vector
+            let mut result_binary_array = Vec::<bool>::new();
+
+            // Convert zeroes and ones to booleans and push them into the output vector
+            for (_, c) in byte_in_binary.chars().enumerate() {
+                match c {
+                    '1' => result_binary_array.push(true),
+                    _ => result_binary_array.push(false),
+                }
+            }
+
+            // Return output vector
+            result_binary_array
+        }
+
+        /// Concerts byte into String (binary value)
+        pub fn to_string(&self) -> String {
+            format!("{:08b}", self.value)
+        }
     }
 
-    /// Convert binary byte looking input string to byte
-    pub fn convert_bit_string_to_u8_char(bit_string: String) -> u8 {
-        // Slice the string into chars
-        // Map '0' and '1' chars to 0s and 1s
-        // Fold the whole "byte-string" into a number
-        // And return it 
-        bit_string.chars().map(|x| match x { '1' => 1, _ => 0 }).fold(0, |acc, b| acc * 2 + b as u8)
-    }
-
-    /// Convert u8 vector into boolean (~= binary) vector
-    pub fn convert_u8_vec_to_bit_vec(vector: &Vec<u8>) -> Vec<bool> {
+    /// Convert Byte vector into boolean (~= binary) vector
+    pub fn convert_byte_vec_to_bit_vec(vector: &Vec<Byte>) -> Vec<bool> {
         // Initialize output boolean vector
         let mut message_as_binary_vector = Vec::<bool>::new();
 
         // Parse message byte by byte until end
         for i in 0..vector.len() {
             // Convert byte into byte bit vector
-            let mut bitvec = convert_u8_to_bit_vec(vector[i]);
+            let mut bitvec = vector[i].to_bit_vec();
 
             // Append byte bit vector to main output vit vector
             message_as_binary_vector.append(&mut bitvec);
@@ -80,63 +141,87 @@ pub mod binary {
         message_as_binary_vector
     }
 
-    /// Convert bit vector into u8 vector
-    pub fn convert_bit_vec_to_u8(bit_vec: &Vec<bool>) -> u8 {
-        let mut byte_as_string; // Byte to string conversion variable
+    /// Convert u8 vector into Byte vector
+    pub fn convert_u8_vec_to_byte_vec(vector: &Vec<u8>) -> Vec<Byte> {
+        vector.into_iter().map(|e| Byte::new(*e)).collect()
+    }
 
-        // Init or reinit read byte
-        byte_as_string = "".to_string();
-
-        let read_byte_slice = &bit_vec[0..8];
-
-        // convert boolean values to '0' and '1' chars
-        for i in 0..8 {
-            match read_byte_slice[i] {
-                true    => byte_as_string.push('1'),
-                _       => byte_as_string.push('0')
-            }
+    /// Traits implementation
+    impl PartialEq for Byte {
+        fn eq(&self, other: &Byte) -> bool {
+            self.value == other.value
         }
+    }
 
-        // Convert "byte-string" to a ASCII char
-        convert_bit_string_to_u8_char(byte_as_string)
+    impl Eq for Byte {}
+
+    impl Clone for Byte {
+        fn clone(&self) -> Byte {
+            Byte::new(self.get_value())
+        }
+    }
+
+    impl fmt::Display for Byte {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "{:08b}", self.value)
+        }
     }
 }
 
 // Tests
 #[cfg(test)]
 pub mod tests {
-    use std::collections::BTreeSet;
     use super::binary;
+    use super::binary::Byte;
+    use std::collections::BTreeSet;
 
     #[test]
-    fn test_empty_least_significant_bit_for_byte() {
-        let mut byte = 31;
-
-        binary::empty_least_significant_bit_for_byte(&mut byte);
-        assert_eq!(byte, 30);
-        binary::empty_least_significant_bit_for_byte(&mut byte);
-        assert_eq!(byte, 30);
+    fn test_constructor_accessor() {
+        let byte = Byte::new(31);
+        assert_eq!(byte.get_value(), 31);
+        assert_eq!(byte.get_value(), 31);
     }
 
     #[test]
-    fn test_store_bit_in_u8() {
-        let mut byte = 31;
+    fn test_from_bit_vec() {
+        let tab = [false, false, false, true, true, true, true, true];
 
-        binary::store_bit_in_u8(&mut byte, true);
-        assert_eq!(byte, 31);
-        binary::store_bit_in_u8(&mut byte, false);
-        assert_eq!(byte, 30);
+        let vec = &tab.to_vec();
+
+        assert_eq!(
+            Byte::from_bit_vec(&vec).expect("Unable to convert bitviec to Byte!"),
+            Byte::new(31)
+        );
     }
 
     #[test]
-    fn test_store_random_bit_in_u8() {
-        let mut byte;
+    fn test_empty_least_significant_bit() {
+        let mut byte = Byte::new(31);
+
+        byte.empty_least_significant_bit();
+        assert_eq!(byte, Byte::new(30));
+        byte.empty_least_significant_bit();
+        assert_eq!(byte, Byte::new(30));
+    }
+
+    #[test]
+    fn test_store_bit() {
+        let mut byte = Byte::new(31);
+
+        byte.store_bit(true);
+        assert_eq!(byte, Byte::new(31));
+        byte.store_bit(false);
+        assert_eq!(byte, Byte::new(30));
+    }
+
+    #[test]
+    fn test_store_random_bit() {
         let mut cases = Vec::<u8>::new();
 
         for _ in 0..100 {
-            byte = 31;
-            binary::store_random_bit_in_u8(&mut byte);
-            cases.push(byte);
+            let mut byte = Byte::new(31);
+            byte.store_random_bit();
+            cases.push(byte.get_value());
         }
 
         let set: BTreeSet<_> = cases.drain(..).collect();
@@ -152,38 +237,45 @@ pub mod tests {
     }
 
     #[test]
-    fn test_convert_u8_to_bit_vec() {
-        let tab = [false, false, false, true, true, true, true, true];
-        let vec = tab.to_vec();
+    fn test_to_bit_vec() {
+        let bit_vec = vec![false, false, false, true, true, true, true, true];
 
-        assert_eq!(binary::convert_u8_to_bit_vec(31), vec);
-    }
-    
-    #[test]
-    fn test_convert_bit_string_to_u8_char() {
-        assert_eq!(binary::convert_bit_string_to_u8_char("00011111".to_string()), 31);
+        assert_eq!(Byte::new(31).to_bit_vec(), bit_vec);
     }
 
     #[test]
-    fn test_convert_u8_vec_to_bit_vec() {
-        let tab = [31, 31, 31];
-        let vec = &tab.to_vec();
-
-        let tab2 = [ false, false, false, true, true ,true, true, true
-                   , false, false, false, true, true ,true, true, true
-                   , false, false, false, true, true ,true, true, true];
-                   
-        let vec2 = tab2.to_vec();
-
-        assert_eq!(binary::convert_u8_vec_to_bit_vec(&vec), vec2);
+    fn test_from_str() {
+        assert_eq!(
+            Byte::from_str("00011111").expect("Unable to convert bitstring to Byte!"),
+            Byte::new(31)
+        );
     }
 
     #[test]
-    fn test_convert_bit_vec_to_u8() {
-        let tab = [false, false, false, true, true, true, true, true];
+    fn test_to_string() {
+        assert_eq!(
+            Byte::from_str("00011111").expect("Unable to convert bitstring to Byte!").to_string(),
+            "00011111".to_owned()
+        );
+    }
 
-        let vec = &tab.to_vec();
+    #[test]
+    fn test_convert_byte_vec_to_bit_vec() {
+        let byte_vec = vec![Byte::new(31), Byte::new(31), Byte::new(31)];
 
-        assert_eq!(binary::convert_bit_vec_to_u8(&vec), 31);
+        let bit_vec = vec![
+            false, false, false, true, true, true, true, true, false, false, false, true, true,
+            true, true, true, false, false, false, true, true, true, true, true,
+        ];
+
+        assert_eq!(binary::convert_byte_vec_to_bit_vec(&byte_vec), bit_vec);
+    }
+
+    #[test]
+    fn convert_u8_vec_to_byte_vec() {
+        let u8_vec = vec![128, 11, 135];
+        let byte_vec = vec![Byte::new(128), Byte::new(11), Byte::new(135)];
+
+        assert_eq!(binary::convert_u8_vec_to_byte_vec(&u8_vec), byte_vec);
     }
 }

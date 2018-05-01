@@ -4,3 +4,10 @@
 * Message are cyphered before beeing written in the picture
 * Able to decrypt messages encoded by the processes described above
 * Coded in Rust language
+
+# TODO
+
+* Add graphical interface
+* Add logging utility
+* Add UTF8 multi-byte character handling
+* Allow file encoding within image

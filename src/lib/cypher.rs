@@ -2,23 +2,28 @@
 pub mod cypher {
     extern crate crypto;
 
-    use self::crypto::{ symmetriccipher, buffer, aes, blockmodes };
-    use self::crypto::buffer::{ ReadBuffer, WriteBuffer, BufferResult };
-    use self::crypto::bcrypt_pbkdf::{ bcrypt_pbkdf };
+    use self::crypto::{aes,
+                       bcrypt_pbkdf::bcrypt_pbkdf,
+                       blockmodes,
+                       buffer,
+                       buffer::{BufferResult, ReadBuffer, WriteBuffer},
+                       symmetriccipher};
 
-    use std::str;
-    use std::cmp;
+    use std::{cmp,
+              io::{Error, ErrorKind},
+              str};
 
     // Encrypt a buffer with the given key and iv using
     // AES-256/CBC/Pkcs encryption.
-    fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
+    fn encrypt(
+        data: &[u8],
+        key: &[u8],
+        iv: &[u8],
+    ) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
         // Create an encryptor instance of the best performing
         // type available for the platform.
-        let mut encryptor = aes::cbc_encryptor(
-                aes::KeySize::KeySize256,
-                key,
-                iv,
-                blockmodes::PkcsPadding);
+        let mut encryptor =
+            aes::cbc_encryptor(aes::KeySize::KeySize256, key, iv, blockmodes::PkcsPadding);
 
         // Each encryption operation encrypts some data from
         // an input buffer into an output buffer. Those buffers
@@ -57,11 +62,17 @@ pub mod cypher {
             // from the writable buffer, create a new readable buffer which
             // contains all data that has been written, and then access all
             // of that data as a slice.
-            final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+            final_result.extend(
+                write_buffer
+                    .take_read_buffer()
+                    .take_remaining()
+                    .iter()
+                    .map(|&i| i),
+            );
 
             match result {
                 BufferResult::BufferUnderflow => break,
-                BufferResult::BufferOverflow => { }
+                BufferResult::BufferOverflow => {}
             }
         }
 
@@ -75,12 +86,13 @@ pub mod cypher {
     // comments in that function. In non-example code, if desired, it is possible to
     // share much of the implementation using closures to hide the operation
     // being performed. However, such code would make this example less clear.
-    fn decrypt(encrypted_data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
-        let mut decryptor = aes::cbc_decryptor(
-                aes::KeySize::KeySize256,
-                key,
-                iv,
-                blockmodes::PkcsPadding);
+    fn decrypt(
+        encrypted_data: &[u8],
+        key: &[u8],
+        iv: &[u8],
+    ) -> Result<Vec<u8>, symmetriccipher::SymmetricCipherError> {
+        let mut decryptor =
+            aes::cbc_decryptor(aes::KeySize::KeySize256, key, iv, blockmodes::PkcsPadding);
 
         let mut final_result = Vec::<u8>::new();
         let mut read_buffer = buffer::RefReadBuffer::new(encrypted_data);
@@ -89,10 +101,16 @@ pub mod cypher {
 
         loop {
             let result = try!(decryptor.decrypt(&mut read_buffer, &mut write_buffer, true));
-            final_result.extend(write_buffer.take_read_buffer().take_remaining().iter().map(|&i| i));
+            final_result.extend(
+                write_buffer
+                    .take_read_buffer()
+                    .take_remaining()
+                    .iter()
+                    .map(|&i| i),
+            );
             match result {
                 BufferResult::BufferUnderflow => break,
-                BufferResult::BufferOverflow => { }
+                BufferResult::BufferOverflow => {}
             }
         }
 
@@ -100,7 +118,7 @@ pub mod cypher {
     }
 
     /// Simple encrypter to encapsulate crypto functions
-    pub fn simple_encrypt(message: &str, password: &str) -> Result<Vec<u8>, &'static str> {
+    pub fn simple_encrypt(message: &str, password: &str) -> Result<Vec<u8>, Error> {
         let iv: [u8; 16] = [0; 16];
 
         // In a real program, the key and iv may be determined
@@ -113,7 +131,7 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        let mut pass_256:[u8;64] = [0;64];
+        let mut pass_256: [u8; 64] = [0; 64];
         for i in 0..cmp::min(password.as_bytes().len(), 64) {
             pass_256[i] = password.as_bytes()[i];
         }
@@ -122,12 +140,15 @@ pub mod cypher {
 
         match encrypt(&message.as_bytes(), &pass_256, &iv) {
             Ok(ok) => Ok(ok),
-            Err(_) => Err("stegano/simple_encrypt : Unable to encrypt message!")
+            Err(_) => Err(Error::new(
+                ErrorKind::Other,
+                "stegano/simple_encrypt : Unable to encrypt message!",
+            )),
         }
     }
-    
+
     /// Simple decrypter to encapsulate crypto functions
-    pub fn simple_decrypt(vector: &Vec<u8>, password: &str) -> Result<String, &'static str> {
+    pub fn simple_decrypt(vector: &Vec<u8>, password: &str) -> Result<String, Error> {
         let iv: [u8; 16] = [0; 16];
 
         // In a real program, the key and iv may be determined
@@ -140,7 +161,7 @@ pub mod cypher {
         // rng.fill_bytes(&mut key);
         // rng.fill_bytes(&mut iv);
 
-        let mut pass_256:[u8;64] = [0;64];
+        let mut pass_256: [u8; 64] = [0; 64];
         for i in 0..cmp::min(password.as_bytes().len(), 64) {
             pass_256[i] = password.as_bytes()[i];
         }
@@ -148,13 +169,17 @@ pub mod cypher {
         bcrypt_pbkdf(password.as_bytes(), b"salt", 2, &mut pass_256);
 
         match decrypt(vector, &pass_256, &iv) {
-            Ok(decrypted_message) => {
-                match str::from_utf8(decrypted_message.as_slice()) {
-                    Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
-                    Err(_) => { Err("stegano/simple_decrypt : Unable to convert decrypted message to UTF8") }
-                }
+            Ok(decrypted_message) => match str::from_utf8(decrypted_message.as_slice()) {
+                Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
+                Err(_) => Err(Error::new(
+                    ErrorKind::InvalidData,
+                    "stegano/simple_decrypt : Unable to convert decrypted message to UTF8",
+                )),
             },
-            Err(_) => { Err("stegano/simple_decrypt : Unable to decrypt message") }
+            Err(_) => Err(Error::new(
+                ErrorKind::InvalidData,
+                "stegano/simple_decrypt : Unable to decrypt message",
+            )),
         }
     }
 }
@@ -166,8 +191,12 @@ pub mod tests {
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted = cypher::simple_encrypt("Hello, how is the weather today", "Pass").unwrap();
+        let encrypted =
+            cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd").unwrap();
 
-        assert_eq!(cypher::simple_decrypt(&encrypted, "Pass"), Ok("Hello, how is the weather today".to_string()));
+        assert_eq!(
+            cypher::simple_decrypt(&encrypted, "Passwd").unwrap(),
+            "Hello, how is the weather today ?".to_string()
+        );
     }
 }
