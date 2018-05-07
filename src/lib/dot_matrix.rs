@@ -479,6 +479,7 @@ pub mod dot_matrix {
 #[cfg(test)]
 pub mod tests {
     use super::dot_matrix::DotMatrix;
+    use std::process;
 
     #[test]
     // TODO : unable to store special characters
@@ -488,13 +489,26 @@ pub mod tests {
         let mut image =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
 
-        image.encode("Hello how is the weather today", "Passesazeaze");
+        image
+            .encode("Hello how is the weather today", "Passesazeaze")
+            .unwrap_or_else(|err| {
+                println!("Error in test_global: {}", err);
+                process::exit(1);
+            });
 
-        image.write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+        image
+            .write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png")
+            .unwrap_or_else(|err| {
+                println!("Error in test_global: {}", err);
+                process::exit(1);
+            });
 
         let image2 =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
-        let res = image2.decode("Passesazeaze")?;
+        let res = image2.decode("Passesazeaze").unwrap_or_else(|err| {
+            println!("Error in test_global: {}", err);
+            process::exit(1);
+        });
 
         assert_eq!(res, "Hello how is the weather today".to_string());
     }

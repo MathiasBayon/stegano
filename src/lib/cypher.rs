@@ -186,13 +186,21 @@ pub mod cypher {
 #[cfg(test)]
 pub mod tests {
     use super::cypher;
+    use std::process;
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd")?;
+        let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd")
+            .unwrap_or_else(|err| {
+                println!("Error in test_simple_encrypt_decrypt: {}", err);
+                process::exit(1);
+            });
 
         assert_eq!(
-            cypher::simple_decrypt(&encrypted, "Passwd")?,
+            cypher::simple_decrypt(&encrypted, "Passwd").unwrap_or_else(|err| {
+                println!("Error in test_simple_encrypt_decrypt: {}", err);
+                process::exit(1);
+            }),
             "Hello, how is the weather today ?".to_string()
         );
     }
