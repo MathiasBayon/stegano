@@ -2,16 +2,14 @@
 pub mod cypher {
     extern crate crypto;
 
-    use self::crypto::{aes,
-                       bcrypt_pbkdf::bcrypt_pbkdf,
-                       blockmodes,
-                       buffer,
-                       buffer::{BufferResult, ReadBuffer, WriteBuffer},
-                       symmetriccipher};
+    use self::crypto::{
+        aes, bcrypt_pbkdf::bcrypt_pbkdf, blockmodes, buffer,
+        buffer::{BufferResult, ReadBuffer, WriteBuffer}, symmetriccipher,
+    };
 
-    use std::{cmp,
-              io::{Error, ErrorKind},
-              str};
+    use std::{
+        cmp, io::{Error, ErrorKind}, str,
+    };
 
     // Encrypt a buffer with the given key and iv using
     // AES-256/CBC/Pkcs encryption.
@@ -191,11 +189,10 @@ pub mod tests {
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted =
-            cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd").unwrap();
+        let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd")?;
 
         assert_eq!(
-            cypher::simple_decrypt(&encrypted, "Passwd").unwrap(),
+            cypher::simple_decrypt(&encrypted, "Passwd")?,
             "Hello, how is the weather today ?".to_string()
         );
     }
