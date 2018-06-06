@@ -1,2 +1,2 @@
-/target/
-/test_files/
+target/*
+test_files/test2.png
