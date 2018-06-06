@@ -443,8 +443,7 @@ pub mod dot_matrix {
         }
     }
 
-    // TODO : Remove private, check how to make tests on private methods
-    pub fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
+    fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
         vector: &mut Vec<bool>,
         bool_triplet: &[bool; 3],
         n: usize,
@@ -481,17 +480,8 @@ pub mod dot_matrix {
 // Tests
 #[cfg(test)]
 pub mod tests {
-    use super::dot_matrix;
     use super::dot_matrix::DotMatrix;
     use std::process;
-
-    #[test]
-    fn test_push_bits_in_vector_from_bool_triplet_from_n_up_to_m() {
-        let mut v = vec![true, false, false];
-        let t = [true, false, true];
-        dot_matrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut v, &t, 1, 2);
-        assert_eq!(v, vec![true, false, false, false, true]);
-    }
 
     #[test]
     // TODO : unable to store special characters
