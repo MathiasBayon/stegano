@@ -150,7 +150,7 @@ pub mod binary {
 
     /// Convert u8 vector into Byte vector
     pub fn convert_u8_vec_to_byte_vec(vector: &Vec<u8>) -> Vec<Byte> {
-        vector.into_iter().map(|e| Byte::new(*e)).collect()
+        vector.into_iter().map(|&e| Byte::new(e)).collect()
     }
 
     /// Traits implementation
