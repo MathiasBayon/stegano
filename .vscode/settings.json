@@ -1,0 +1,21 @@
+{
+    "cSpell.words": [
+        "analysers",
+        "bcrypt",
+        "bitstring",
+        "bitvec",
+        "blockmodes",
+        "charac",
+        "decryptor",
+        "encrypter",
+        "encryptor",
+        "filepath",
+        "pbkdf",
+        "pkcs",
+        "reinit",
+        "rgba",
+        "scrypt",
+        "stegano",
+        "symmetriccipher"
+    ]
+}

@@ -3,8 +3,9 @@ pub mod binary {
 
     extern crate rand;
     use self::rand::Rng;
-    use std::{fmt,
-              io::{Error, ErrorKind}};
+    use std::{
+        fmt, io::{Error, ErrorKind},
+    };
 
     /// A Byte, containing a value...
     #[derive(Debug)]
@@ -15,7 +16,7 @@ pub mod binary {
     impl Byte {
         /// Constructor
         pub fn new(value: u8) -> Byte {
-            Byte { value: value }
+            Byte { value }
         }
 
         /// Public accessor for value
@@ -24,6 +25,7 @@ pub mod binary {
         }
 
         /// Convert binary byte looking input string to byte
+        /// TODD : add examples for doc, compiled ones
         pub fn from_str(bit_str: &str) -> Result<Byte, Error> {
             // Slice the string into chars
             // Map '0' and '1' chars to 0s and 1s
@@ -46,25 +48,20 @@ pub mod binary {
             }
         }
 
-        /// Convert bit vector into u8 vector
-        pub fn from_bit_vec(bit_vec: &Vec<bool>) -> Result<Byte, Error> {
-            let mut byte_as_string; // Byte to string conversion variable
-
-            // Init or reinit read byte
-            byte_as_string = "".to_string();
-
-            let read_byte_slice = &bit_vec[0..8];
-
-            // convert boolean values to '0' and '1' chars
-            for i in 0..8 {
-                match read_byte_slice[i] {
-                    true => byte_as_string.push('1'),
-                    _ => byte_as_string.push('0'),
-                }
+        /// Convert bool vector into u8 vector
+        pub fn from_bool_vec(bit_vec: &Vec<bool>) -> Result<Byte, Error> {
+            if bit_vec.len() > 8 {
+                return Err(Error::new(
+                    ErrorKind::Other,
+                    "Input bit_vec is too long to be stored in one Byte",
+                ));
             }
-
-            // Convert "byte-string" to a ASCII char
-            Byte::from_str(byte_as_string.as_str())
+            Ok(Byte {
+                value: bit_vec
+                    .into_iter()
+                    .map(|b| self::convert_bool_to_u8(*b))
+                    .fold(0, |acc, b| acc * 2 + b as u8),
+            })
         }
 
         /// Sets the least significant bit to 0 (input parameter)
@@ -99,22 +96,13 @@ pub mod binary {
 
         /// Converts self into a boolean (~= binary) vector
         pub fn to_bit_vec(&self) -> Vec<bool> {
-            // Convert input byte to binary string
-            let byte_in_binary: String = format!("{:08b}", self.value);
-
-            // Initializing output vector
-            let mut result_binary_array = Vec::<bool>::new();
-
-            // Convert zeroes and ones to booleans and push them into the output vector
-            for (_, c) in byte_in_binary.chars().enumerate() {
-                match c {
-                    '1' => result_binary_array.push(true),
-                    _ => result_binary_array.push(false),
-                }
-            }
-
-            // Return output vector
-            result_binary_array
+            self.to_string()
+                .chars()
+                .map(|c| match c {
+                    '1' => true,
+                    _ => false,
+                })
+                .collect()
         }
 
         /// Concerts byte into String (binary value)
@@ -123,15 +111,26 @@ pub mod binary {
         }
     }
 
+    /// Return true if chr is a one-byte
     pub fn is_one_byte_char(chr: &char) -> bool {
         (*chr as u8) < 128
     }
 
+    /// Return true is msg is only made of one-byte chars
     pub fn is_one_byte_chars_message(msg: &str) -> bool {
         msg.chars().into_iter().all(|c| is_one_byte_char(&c))
     }
 
+    /// Convert boolean value to 1 / 0, as u8
+    pub fn convert_bool_to_u8(bool_value: bool) -> u8 {
+        match bool_value {
+            true => 1,
+            false => 0,
+        }
+    }
+
     /// Convert Byte vector into boolean (~= binary) vector
+    /// TODO : refactor with functional programming
     pub fn convert_byte_vec_to_bit_vec(vector: &Vec<Byte>) -> Vec<bool> {
         // Initialize output boolean vector
         let mut message_as_binary_vector = Vec::<bool>::new();
@@ -191,13 +190,13 @@ pub mod tests {
     }
 
     #[test]
-    fn test_from_bit_vec() {
+    fn test_from_bool_vec() {
         let tab = [false, false, false, true, true, true, true, true];
 
         let vec = &tab.to_vec();
 
         assert_eq!(
-            Byte::from_bit_vec(&vec).expect("Unable to convert bitviec to Byte!"),
+            Byte::from_bool_vec(&vec).expect("Unable to convert bitvec to Byte!"),
             Byte::new(31)
         );
     }
@@ -298,6 +297,14 @@ pub mod tests {
     #[test]
     fn test_is_one_byte_chars_message() {
         assert_eq!(binary::is_one_byte_chars_message("Very nice message"), true);
-        assert_eq!(binary::is_one_byte_chars_message("Véry ugly méssàge !!!"), false);
+        assert_eq!(
+            binary::is_one_byte_chars_message("Véry ugly méssàge !!!"),
+            false
+        );
+    }
+
+    #[test]
+    fn test_convert_bool_to_u8() {
+        assert_eq!(binary::convert_bool_to_u8(true), 1);
     }
 }

@@ -2,8 +2,13 @@
 name = "stegano"
 version = "0.2.0"
 authors = ["Mathias Bayon <mathias.bayon@gmail.com>"]
+description = "A simple steganographic utility"
+license = "MIT/Apache-2.0"
 
 [dependencies]
 rand = "*"
 image = "*"
 rust-crypto ="*"
+
+[profile.dev]
+opt-level = 1

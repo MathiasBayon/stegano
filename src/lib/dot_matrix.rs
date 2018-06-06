@@ -4,11 +4,10 @@ pub mod dot_matrix {
     use self::image::{DynamicImage, GenericImage, ImageError, Pixel};
 
     use std::{
-        fmt, io::{Error, ErrorKind},
+        fmt, io::{Error, ErrorKind}, str,
     };
 
     use lib::binary::{binary, binary::Byte};
-    use lib::cypher::*;
 
     // TODO : put this in external file, or as input parameter
     const ENDING_CHAR: char = '~';
@@ -47,18 +46,18 @@ pub mod dot_matrix {
             self.image = image::open(filepath);
         }
 
-        /// Function to write the picture into target unexisting file
+        /// Function to write the picture into target file
         /// TODO : refactor
         pub fn write_to_file(&self, filepath: &str) -> Result<(), Error> {
             match &self.image {
-                &Ok(ref image_inner) => match image_inner.save(filepath) {
+                Ok(ref image_inner) => match image_inner.save(filepath) {
                     Ok(_) => Ok(()),
                     Err(_) => Err(Error::new(
                         ErrorKind::InvalidInput,
                         "stegano/write_to_file : Unable to save output file!",
                     )),
                 },
-                &Err(_) => Err(Error::new(
+                Err(_) => Err(Error::new(
                     ErrorKind::InvalidData,
                     "stegano/write_to_file : Unable to open inner image!",
                 )),
@@ -68,12 +67,12 @@ pub mod dot_matrix {
         /// Function to store 3 bits, hidden into pixel at input coordinates
         fn store_3bits_at(&mut self, x: u32, y: u32, bits: &[bool]) -> Result<(), Error> {
             // Get the pixel at input coordinates
-            let ref mut image_unwraped;
+            let ref mut image_unwrapped;
             let pixel;
 
-            match &mut self.image {
-                &mut Ok(ref mut image_unwraped_temp) => image_unwraped = image_unwraped_temp,
-                &mut Err(_) => {
+            match self.image {
+                Ok(ref mut image_unwrapped_temp) => image_unwrapped = image_unwrapped_temp,
+                Err(_) => {
                     return Err(Error::new(
                         ErrorKind::InvalidData,
                         "stegano/store_3bits_at : Unable to open inner image!",
@@ -81,7 +80,7 @@ pub mod dot_matrix {
                 }
             }
 
-            pixel = image_unwraped.get_pixel(x, y);
+            pixel = image_unwrapped.get_pixel(x, y);
 
             // Retrieve pixel components
             let mut red = Byte::new(pixel.to_rgb()[0]);
@@ -103,7 +102,7 @@ pub mod dot_matrix {
 
             // Create new pixel from altered RGB values and put it in image
             // Alpha is not altered
-            image_unwraped.put_pixel(
+            image_unwrapped.put_pixel(
                 x,
                 y,
                 image::Rgba([
@@ -122,10 +121,10 @@ pub mod dot_matrix {
             let pixel;
 
             match &self.image {
-                &Ok(ref image_unwraped) => {
-                    pixel = image_unwraped.get_pixel(x, y);
+                Ok(ref image_unwrapped) => {
+                    pixel = image_unwrapped.get_pixel(x, y);
                 }
-                &Err(_) => {
+                Err(_) => {
                     return Err(Error::new(
                         ErrorKind::InvalidInput,
                         "stegano/get_3bits_at :Unable to get pixel at coordinates",
@@ -165,17 +164,16 @@ pub mod dot_matrix {
 
         /// Returns true if image is big enough to store given message
         fn is_big_enough_to_store_message(&self, message_len: u32) -> bool {
-            self.get_dimensions().0 * self.get_dimensions().1 * 3 > message_len
+            self.get_dimensions().0 * self.get_dimensions().1 * 3 + 1 /* ENDING_CHAR */ > message_len
         }
 
         /// Store random bits from input x and y coordinates, to hide encrypted message length
         fn store_random_from(&mut self, mut x: u32, mut y: u32) -> Result<(), Error> {
-            let image_unwraped;
-            let max_x = self.get_dimensions().0;
-            let max_y = self.get_dimensions().1;
+            let image_unwrapped;
+            let (max_x, max_y) = self.get_dimensions();
 
             match self.image {
-                Ok(ref mut image_unwraped_temp) => image_unwraped = image_unwraped_temp,
+                Ok(ref mut image_unwrapped_temp) => image_unwrapped = image_unwrapped_temp,
                 Err(_) => {
                     return Err(Error::new(
                         ErrorKind::InvalidData,
@@ -186,11 +184,11 @@ pub mod dot_matrix {
 
             // Ensure to stays within picture boundaries
             while {
-                let pixel_unwraped = image_unwraped.get_pixel(x, y);
+                let pixel_unwrapped = image_unwrapped.get_pixel(x, y);
 
-                let mut red = Byte::new(pixel_unwraped.to_rgb()[0]);
-                let mut green = Byte::new(pixel_unwraped.to_rgb()[1]);
-                let mut blue = Byte::new(pixel_unwraped.to_rgb()[2]);
+                let mut red = Byte::new(pixel_unwrapped.to_rgb()[0]);
+                let mut green = Byte::new(pixel_unwrapped.to_rgb()[1]);
+                let mut blue = Byte::new(pixel_unwrapped.to_rgb()[2]);
 
                 // Store random bits in least significant bit of each color RGB component
                 red.store_random_bit();
@@ -199,14 +197,14 @@ pub mod dot_matrix {
 
                 // Create new pixel from altered RGB values and put it in image
                 // Alpha is not altered
-                image_unwraped.put_pixel(
+                image_unwrapped.put_pixel(
                     x,
                     y,
                     image::Rgba([
                         red.get_value(),
                         green.get_value(),
                         blue.get_value(),
-                        pixel_unwraped[3],
+                        pixel_unwrapped[3],
                     ]),
                 );
 
@@ -240,12 +238,12 @@ pub mod dot_matrix {
                 ));
             }
 
-            // Add ending charadter to input message
-            let mut encrypted_message = cypher::simple_encrypt(message, password)?;
+            // Add ending character to input message
+            let mut encrypted_message = Vec::from(message.as_bytes()); //cypher::simple_encrypt(message, password)?;
 
-            get_vector_w_ending_char(&mut encrypted_message);
+            add_ending_char(&mut encrypted_message);
 
-            // Convert message to binary vetor
+            // Convert message to binary vector
             let vector = binary::convert_byte_vec_to_bit_vec(&binary::convert_u8_vec_to_byte_vec(
                 &encrypted_message,
             ));
@@ -253,7 +251,7 @@ pub mod dot_matrix {
             // Get binary vector length
             let message_length = vector.len();
 
-            // Check if picture is big enoug to store binary vector
+            // Check if picture is big enough to store binary vector
             if !self.is_big_enough_to_store_message(message_length as u32) {
                 return Err(Error::new(
                     ErrorKind::InvalidData,
@@ -265,8 +263,7 @@ pub mod dot_matrix {
             let mut x = 0;
             let mut y = 0;
 
-            let max_x = self.get_dimensions().0;
-            let max_y = self.get_dimensions().1;
+            let (max_x, max_y) = self.get_dimensions();
 
             // Parsing cursor : as we can store 3 bits in a pixel
             // this index ensures that we progress 3 bits by 3 bits in the message converted as vector
@@ -276,7 +273,7 @@ pub mod dot_matrix {
             // Ensure to stays within picture boundaries
             while {
                 // Check if message end is reached and if there is less than 3 bits to write into picture
-                if parsing_cursor + 2 > message_length {
+                if parsing_cursor + 2 >= message_length {
                     // If so, dump remaining vector bits into last pixel
                     self.store_3bits_at(x, y, &vector[parsing_cursor..])?;
 
@@ -299,7 +296,7 @@ pub mod dot_matrix {
                 match move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)) {
                     Ok(_) => true,
                     Err(_) => false,
-                }
+                } // Error seems to be here !
             } {}
 
             Err(Error::new(
@@ -321,10 +318,9 @@ pub mod dot_matrix {
             let mut x = 0;
             let mut y = 0;
 
-            let max_x = self.get_dimensions().0;
-            let max_y = self.get_dimensions().1;
+            let (max_x, max_y) = self.get_dimensions();
 
-            let mut bool_triplet_unwraped;
+            let mut bool_triplet_unwrapped;
 
             // Vector containing consolidated bits, before conversion in byte, then in char
             let mut boolean_byte_vector = Vec::<bool>::new();
@@ -340,42 +336,48 @@ pub mod dot_matrix {
 
             // Keep cursor within picture boundaries
             while {
-                bool_triplet_unwraped = self.get_3bits_at(x, y)?;
+                bool_triplet_unwrapped = self.get_3bits_at(x, y)?;
 
                 if boolean_byte_vector.len() == 6 {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwraped,
+                        &bool_triplet_unwrapped,
                         0,
                         1,
                     );
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut remains_of_previous_bit_vector,
-                        &bool_triplet_unwraped,
+                        &bool_triplet_unwrapped,
                         2,
                         2,
                     );
                 } else if boolean_byte_vector.len() == 7 {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwraped,
+                        &bool_triplet_unwrapped,
                         0,
                         0,
                     );
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut remains_of_previous_bit_vector,
-                        &bool_triplet_unwraped,
+                        &bool_triplet_unwrapped,
                         1,
                         2,
                     );
                 } else if boolean_byte_vector.len() == 8 {
                     // Complete byte formed!
                     // Convert byte to character
-                    charac = Byte::from_bit_vec(&boolean_byte_vector)?.get_value();
+                    charac = Byte::from_bool_vec(&boolean_byte_vector)?.get_value();
 
                     // Check if read character is the ending one
                     if charac == ENDING_CHAR as u8 {
-                        return Ok(cypher::simple_decrypt(&message, password)?);
+                        match str::from_utf8(message.as_slice()) {
+                            // cypher::simple_decrypt(&message, password)?);
+                            Ok(str_str) => return Ok(str_str.to_owned()),
+                            Err(err) => {
+                                return Err(Error::new(ErrorKind::InvalidData, err.to_string()))
+                            }
+                        };
                     } else {
                         // Continue fetching pixels to retrieve the missing characters
                         message.push(charac);
@@ -387,7 +389,7 @@ pub mod dot_matrix {
 
                         push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                             &mut boolean_byte_vector,
-                            &bool_triplet_unwraped,
+                            &bool_triplet_unwrapped,
                             0,
                             2,
                         );
@@ -395,7 +397,7 @@ pub mod dot_matrix {
                 } else {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwraped,
+                        &bool_triplet_unwrapped,
                         0,
                         2,
                     );
@@ -415,7 +417,7 @@ pub mod dot_matrix {
     }
 
     /// Append ending character to message
-    fn get_vector_w_ending_char(message: &mut Vec<u8>) {
+    fn add_ending_char(message: &mut Vec<u8>) {
         message.push(ENDING_CHAR as u8);
     }
 
@@ -441,7 +443,8 @@ pub mod dot_matrix {
         }
     }
 
-    fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
+    // TODO : Remove private, check how to make tests on private methods
+    pub fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
         vector: &mut Vec<bool>,
         bool_triplet: &[bool; 3],
         n: usize,
@@ -478,8 +481,17 @@ pub mod dot_matrix {
 // Tests
 #[cfg(test)]
 pub mod tests {
+    use super::dot_matrix;
     use super::dot_matrix::DotMatrix;
     use std::process;
+
+    #[test]
+    fn test_push_bits_in_vector_from_bool_triplet_from_n_up_to_m() {
+        let mut v = vec![true, false, false];
+        let t = [true, false, true];
+        dot_matrix::push_bits_in_vector_from_bool_triplet_from_n_up_to_m(&mut v, &t, 1, 2);
+        assert_eq!(v, vec![true, false, false, false, true]);
+    }
 
     #[test]
     // TODO : unable to store special characters
@@ -490,7 +502,7 @@ pub mod tests {
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
 
         image
-            .encode("Hello how is the weather today", "Passesazeaze")
+            .encode("Hello how is the weather today", "Password")
             .unwrap_or_else(|err| {
                 println!("Error in test_global: {}", err);
                 process::exit(1);
@@ -505,7 +517,7 @@ pub mod tests {
 
         let image2 =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
-        let res = image2.decode("Passesazeaze").unwrap_or_else(|err| {
+        let res = image2.decode("Password").unwrap_or_else(|err| {
             println!("Error in test_global: {}", err);
             process::exit(1);
         });

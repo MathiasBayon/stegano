@@ -44,7 +44,7 @@ pub mod cypher {
         // or more output space), the operation is guaranteed to get closer to
         // completing the full operation - ie: "make progress".
         //
-        // Here, we pass the data to encrypt to the enryptor along with a fixed-size
+        // Here, we pass the data to encrypt to the encryptor along with a fixed-size
         // output buffer. The 'true' flag indicates that the end of the data that
         // is to be encrypted is included in the input buffer (which is true, since
         // the input data includes all the data to encrypt). After each call, we copy
@@ -145,7 +145,7 @@ pub mod cypher {
         }
     }
 
-    /// Simple decrypter to encapsulate crypto functions
+    /// Simple decryption to encapsulate crypto functions
     pub fn simple_decrypt(vector: &Vec<u8>, password: &str) -> Result<String, Error> {
         let iv: [u8; 16] = [0; 16];
 
@@ -190,14 +190,14 @@ pub mod tests {
 
     #[test]
     fn test_simple_encrypt_decrypt() {
-        let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Passwd")
+        let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Password")
             .unwrap_or_else(|err| {
                 println!("Error in test_simple_encrypt_decrypt: {}", err);
                 process::exit(1);
             });
 
         assert_eq!(
-            cypher::simple_decrypt(&encrypted, "Passwd").unwrap_or_else(|err| {
+            cypher::simple_decrypt(&encrypted, "Password").unwrap_or_else(|err| {
                 println!("Error in test_simple_encrypt_decrypt: {}", err);
                 process::exit(1);
             }),
