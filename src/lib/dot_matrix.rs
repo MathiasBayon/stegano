@@ -7,7 +7,7 @@ pub mod dot_matrix {
         fmt, io::{Error, ErrorKind}, str,
     };
 
-    use lib::binary::{binary, binary::Byte};
+    use lib::{binary::{binary, binary::Byte}, cypher::cypher};
 
     // TODO : put this in external file, or as input parameter
     const ENDING_CHAR: char = '~';
@@ -239,7 +239,7 @@ pub mod dot_matrix {
             }
 
             // Add ending character to input message
-            let mut encrypted_message = Vec::from(message.as_bytes()); //cypher::simple_encrypt(message, password)?;
+            let mut encrypted_message = cypher::simple_encrypt(message, password)?;
 
             add_ending_char(&mut encrypted_message);
 
@@ -371,8 +371,7 @@ pub mod dot_matrix {
 
                     // Check if read character is the ending one
                     if charac == ENDING_CHAR as u8 {
-                        match str::from_utf8(message.as_slice()) {
-                            // cypher::simple_decrypt(&message, password)?);
+                        match cypher::simple_decrypt(&message, password) {
                             Ok(str_str) => return Ok(str_str.to_owned()),
                             Err(err) => {
                                 return Err(Error::new(ErrorKind::InvalidData, err.to_string()))

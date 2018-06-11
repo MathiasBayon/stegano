@@ -1,6 +1,6 @@
 [package]
 name = "stegano"
-version = "0.2.0"
+version = "1.0.0"
 authors = ["Mathias Bayon <mathias.bayon@gmail.com>"]
 description = "A simple steganographic utility"
 license = "MIT/Apache-2.0"
