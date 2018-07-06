@@ -12,4 +12,7 @@
 * Add graphical interface
 * Add logging utility
 * Add UTF8 multi-byte character handling
-* Allow file encoding within image
+* Refactor multi)-conversions from arrays to vecs and vice-versa
+* Add multi-threading
+* Add code doc
+* Improve cyphering

@@ -192,13 +192,13 @@ pub mod tests {
     fn test_simple_encrypt_decrypt() {
         let encrypted = cypher::simple_encrypt("Hello, how is the weather today ?", "Password")
             .unwrap_or_else(|err| {
-                println!("Error in test_simple_encrypt_decrypt: {}", err);
+                eprintln!("Error in test_simple_encrypt_decrypt: {}", err);
                 process::exit(1);
             });
 
         assert_eq!(
             cypher::simple_decrypt(&encrypted, "Password").unwrap_or_else(|err| {
-                println!("Error in test_simple_encrypt_decrypt: {}", err);
+                eprintln!("Error in test_simple_encrypt_decrypt: {}", err);
                 process::exit(1);
             }),
             "Hello, how is the weather today ?".to_string()

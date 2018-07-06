@@ -3,11 +3,17 @@ pub mod dot_matrix {
     extern crate image;
     use self::image::{DynamicImage, GenericImage, ImageError, Pixel};
 
-    use std::{
-        fmt, io::{Error, ErrorKind}, str,
-    };
+    use std::{fmt, str};
 
-    use lib::{binary::{binary, binary::Byte}, cypher::cypher};
+    use std::io::{Error, ErrorKind};
+
+    use std::fs::File;
+    use std::io::prelude::*;
+    use std::io::BufReader;
+
+    use lib::binary::{binary, binary::Byte};
+
+    use lib::cypher::cypher;
 
     // TODO : put this in external file, or as input parameter
     const ENDING_CHAR: char = '~';
@@ -127,7 +133,10 @@ pub mod dot_matrix {
                 Err(_) => {
                     return Err(Error::new(
                         ErrorKind::InvalidInput,
-                        "stegano/get_3bits_at :Unable to get pixel at coordinates",
+                        format!(
+                            "stegano/get_3bits_at : Unable to get pixel at coordinates ({},{})",
+                            x, y
+                        ),
                     ))
                 }
             }
@@ -217,6 +226,15 @@ pub mod dot_matrix {
             Ok(())
         }
 
+        /// Encode given file in self image
+        pub fn encode_file(&mut self, filepath: &str, password: &str) -> Result<(), Error> {
+            let input_file = File::open(filepath)?;
+            let mut buf_reader = BufReader::new(input_file);
+            let mut contents = String::new();
+            buf_reader.read_to_string(&mut contents)?;
+            self.encode(contents.as_str(), password)
+        }
+
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), Error> {
             if !binary::is_one_byte_chars_message(message) {
@@ -303,6 +321,13 @@ pub mod dot_matrix {
                 ErrorKind::Other,
                 "stegano/encode : Input file not big enough to store message",
             )) // Should not happen
+        }
+
+        /// Decodes image and return result file
+        pub fn decode_file(&self, filepath: &str, password: &str) -> Result<(), Error> {
+            let decoded_string = &self.decode(password)?;
+            let mut output_file = File::create(filepath)?;
+            output_file.write_all(decoded_string.as_bytes())
         }
 
         /// Decodes image and return result string
@@ -480,12 +505,16 @@ pub mod dot_matrix {
 #[cfg(test)]
 pub mod tests {
     use super::dot_matrix::DotMatrix;
-    use std::process;
+    use std::{
+        fs::{self, File}, io::{Read, Write}, process,
+    };
 
     #[test]
     // TODO : unable to store special characters
     // TODO : errors triggering in a very useless order
     fn test_global() {
+        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+
         // TODO : relative path
         let mut image =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
@@ -493,24 +522,93 @@ pub mod tests {
         image
             .encode("Hello how is the weather today", "Password")
             .unwrap_or_else(|err| {
-                println!("Error in test_global: {}", err);
+                eprintln!("Error in test_global: {}", err);
                 process::exit(1);
             });
 
         image
             .write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png")
             .unwrap_or_else(|err| {
-                println!("Error in test_global: {}", err);
+                eprintln!("Error in test_global: {}", err);
                 process::exit(1);
             });
 
         let image2 =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
         let res = image2.decode("Password").unwrap_or_else(|err| {
-            println!("Error in test_global: {}", err);
+            eprintln!("Error in test_global: {}", err);
             process::exit(1);
         });
 
         assert_eq!(res, "Hello how is the weather today".to_string());
+    }
+
+    #[test]
+    fn test_global_with_file_encoding() {
+        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.txt");
+        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt");
+
+        // TODO : relative path
+        let mut image =
+            DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
+        let mut file = File::create(
+            "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.txt",
+        ).unwrap_or_else(|err| {
+            eprintln!("Error in test_global: {}", err);
+            process::exit(1);
+        });
+
+        file.write_all("Test message within file".as_bytes())
+            .unwrap_or_else(|err| {
+                eprintln!("Error in test_global: {}", err);
+                process::exit(1);
+            });
+
+        image
+            .encode_file(
+                "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.txt",
+                "Password",
+            )
+            .unwrap_or_else(|err| {
+                eprintln!("Error in test_global: {}", err);
+                process::exit(1);
+            });
+
+        image
+            .write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png")
+            .unwrap_or_else(|err| {
+                eprintln!("Error in test_global: {}", err);
+                process::exit(1);
+            });
+
+        let image2 =
+            DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+        let _ = image2
+            .decode_file(
+                "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt",
+                "Password",
+            )
+            .unwrap_or_else(|err| {
+                eprintln!("Error in test_global: {}", err);
+                process::exit(1);
+            });
+
+        let mut file = File::open(
+            "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt",
+        ).unwrap_or_else(|err| {
+            eprintln!("Error in test_global: {}", err);
+            process::exit(1);
+        });
+
+        let mut result_string = String::new();
+        let _ = file
+            .read_to_string(&mut result_string)
+            .unwrap_or_else(|err| {
+                eprintln!("Error in test_global: {}", err);
+                process::exit(1);
+            });
+
+        assert_eq!("Test message within file".to_string(), result_string);
     }
 }

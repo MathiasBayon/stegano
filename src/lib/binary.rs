@@ -2,6 +2,7 @@
 pub mod binary {
 
     extern crate rand;
+    
     use self::rand::Rng;
     use std::{
         fmt, io::{Error, ErrorKind},
@@ -24,8 +25,7 @@ pub mod binary {
             self.value
         }
 
-        /// Convert binary byte looking input string to byte
-        /// TODD : add examples for doc, compiled ones
+        /// Convert binary-byte-looking input string to byte
         pub fn from_str(bit_str: &str) -> Result<Byte, Error> {
             // Slice the string into chars
             // Map '0' and '1' chars to 0s and 1s
@@ -43,12 +43,12 @@ pub mod binary {
                 }),
                 _ => Err(Error::new(
                     ErrorKind::InvalidData,
-                    "Length different from 8",
+                    "Input bit-string length is different from 8",
                 )),
             }
         }
 
-        /// Convert bool vector into u8 vector
+        /// Convert bool vector into Byte
         pub fn from_bool_vec(bit_vec: &Vec<bool>) -> Result<Byte, Error> {
             if bit_vec.len() > 8 {
                 return Err(Error::new(
@@ -56,6 +56,7 @@ pub mod binary {
                     "Input bit_vec is too long to be stored in one Byte",
                 ));
             }
+
             Ok(Byte {
                 value: bit_vec
                     .into_iter()
@@ -91,6 +92,8 @@ pub mod binary {
 
             if random_bit_value > 0 {
                 self.store_bit(true);
+            } else {
+                self.store_bit(false);
             }
         }
 
@@ -100,7 +103,7 @@ pub mod binary {
                 .chars()
                 .map(|c| match c {
                     '1' => true,
-                    _ => false,
+                    _   => false,
                 })
                 .collect()
         }
@@ -178,14 +181,12 @@ pub mod binary {
 // Tests
 #[cfg(test)]
 pub mod tests {
-    use super::binary;
-    use super::binary::Byte;
+    use super::binary::{Byte, self};
     use std::collections::BTreeSet;
 
     #[test]
     fn test_constructor_accessor() {
         let byte = Byte::new(31);
-        assert_eq!(byte.get_value(), 31);
         assert_eq!(byte.get_value(), 31);
     }
 
