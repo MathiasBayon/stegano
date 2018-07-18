@@ -545,13 +545,14 @@ pub mod tests {
 
     #[test]
     fn test_global_with_file_encoding() {
-        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+        let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test_global.png");
         let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.txt");
         let _ = fs::remove_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt");
 
         // TODO : relative path
         let mut image =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.png");
+        
         let mut file = File::create(
             "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test.txt",
         ).unwrap_or_else(|err| {
@@ -576,14 +577,14 @@ pub mod tests {
             });
 
         image
-            .write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png")
+            .write_to_file("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test_global.png")
             .unwrap_or_else(|err| {
                 eprintln!("Error in test_global: {}", err);
                 process::exit(1);
             });
 
         let image2 =
-            DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.png");
+            DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test_global.png");
         let _ = image2
             .decode_file(
                 "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt",
