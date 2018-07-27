@@ -12,8 +12,8 @@ enum Usage {
 fn print_usage(mode: Usage) {
     match mode {
         Usage::FULL => println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<message if encoding]"),
-        Usage::ENCODE => println!("Usage stegano ENCODE <input file path> <output file path> <password> <message>"),
-        Usage::DECODE => println!("Usage stegano DECODE <input file path> <password>"),
+        Usage::ENCODE => println!("Usage stegano ENCODE <input file path> <output file path> <password>"),
+        Usage::DECODE => println!("Usage stegano DECODE <input file path> <output file path> <password>"),
     }
     process::exit(1);
 }
@@ -33,7 +33,7 @@ fn main() {
 
             let mut input_file = DotMatrix::new(&args[2]);
 
-            let encoding = input_file.encode(&args[5], &args[4]);
+            let encoding = input_file.encode_file(&args[5], &args[4]);
             match encoding {
                 Ok(_) => println!("Encoding.....SUCCESS"),
                 Err(error) => {
@@ -58,7 +58,7 @@ fn main() {
 
             let output_file = DotMatrix::new(&args[2]);
 
-            let decoding = output_file.decode(&args[3]);
+            let decoding = output_file.decode_file(&args[3], &args[4]);
             match decoding {
                 Ok(res) => println!("Decoding.....SUCCESS : {}", res),
                 Err(error) => {
