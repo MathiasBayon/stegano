@@ -25,8 +25,8 @@ fn main() {
         print_usage(Usage::FULL);
     }
 
-    match &args[1].as_str() {
-        &"ENCODE" => {
+    match (&args[1]).as_str() {
+        "ENCODE" => {
             if args.len() != 6 {
                 print_usage(Usage::ENCODE);
             }
@@ -51,7 +51,7 @@ fn main() {
                 }
             }
         }
-        &"DECODE" => {
+        "DECODE" => {
             if args.len() != 5 {
                 print_usage(Usage::DECODE);
             }
@@ -60,7 +60,7 @@ fn main() {
 
             let decoding = output_file.decode_file(&args[3], &args[4]);
             match decoding {
-                Ok(res) => println!("Decoding.....SUCCESS : {}", res),
+                Ok(_) => println!("Decoding.....SUCCESS"),
                 Err(error) => {
                     println!("Decoding.....ERROR : {}", error);
                     process::exit(1);
