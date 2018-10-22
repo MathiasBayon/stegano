@@ -3,34 +3,20 @@ pub mod lib;
 use self::lib::dot_matrix::dot_matrix::DotMatrix;
 use std::{env, process};
 
-enum Usage {
-    FULL,
-    ENCODE,
-    DECODE,
-}
-
-fn print_usage(mode: Usage) {
-    match mode {
-        Usage::FULL => println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<message if encoding]"),
-        Usage::ENCODE => println!("Usage stegano ENCODE <input file path> <output file path> <password>"),
-        Usage::DECODE => println!("Usage stegano DECODE <input file path> <output file path> <password>"),
-    }
+fn print_usage() {
+    println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<message if encoding]");
     process::exit(1);
 }
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 3 {
-        print_usage(Usage::FULL);
+    if args.len() != 5 {
+        print_usage();
     }
 
     match (&args[1]).as_str() {
         "ENCODE" => {
-            if args.len() != 6 {
-                print_usage(Usage::ENCODE);
-            }
-
             let mut input_file = DotMatrix::new(&args[2]);
 
             let encoding = input_file.encode_file(&args[5], &args[4]);
@@ -52,10 +38,6 @@ fn main() {
             }
         }
         "DECODE" => {
-            if args.len() != 5 {
-                print_usage(Usage::DECODE);
-            }
-
             let output_file = DotMatrix::new(&args[2]);
 
             let decoding = output_file.decode_file(&args[3], &args[4]);
@@ -68,7 +50,7 @@ fn main() {
             }
         }
         _ => {
-            print_usage(Usage::FULL);
+            print_usage();
         }
     }
 }
