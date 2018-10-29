@@ -92,7 +92,7 @@ fn main() {
     // Collect input arguments into vector
     let args: Vec<String> = env::args().collect();
 
-    // If user just called stagano without any arguments
+    // If user just called stegano without any arguments
     // display full usage message
     if args.len() < 2 {
         print_usage(Usage::FULL);
