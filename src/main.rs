@@ -1,56 +1,116 @@
+//! MAIN
 pub mod lib;
 
 use self::lib::dot_matrix::dot_matrix::DotMatrix;
 use std::{env, process};
 
-fn print_usage() {
-    println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<message if encoding]");
-    process::exit(1);
+// Enum used to display usage depending on first argument entered by user
+enum Usage {
+    FULL,
+    ENCODE,
+    DECODE,
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+/// Print stegano usage
+/// This function uses first input argument to display a more contextual usage
+fn print_usage(mode: Usage) {
+    match mode {
+        Usage::FULL =>
+            println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<ASCII file to encode, if encoding>]"),
+        Usage::ENCODE =>
+            println!("Usage stegano ENCODE <input file path> <output file path> <password>"),
+        Usage::DECODE =>
+            println!("Usage stegano DECODE <input file path> <output file path> <password>"),
+    }
+}
 
-    if args.len() != 5 {
-        print_usage();
+/// Sub main, for encoding mode
+fn main_sub_encode(args: &Vec<String>) {
+    // Check input arguments number
+    if args.len() != 6 {
+        print_usage(Usage::ENCODE);
     }
 
-    match (&args[1]).as_str() {
-        "ENCODE" => {
-            let mut input_file = DotMatrix::new(&args[2]);
+    // Initialize dot matrix from input file
+    let mut input_file = DotMatrix::new(&args[2]);
 
-            let encoding = input_file.encode_file(&args[5], &args[4]);
-            match encoding {
-                Ok(_) => println!("Encoding.....SUCCESS"),
-                Err(error) => {
-                    println!("Encoding.....ERROR : {}", error);
-                    process::exit(1);
-                }
-            }
+    // Encode input file within matrix
+    let encoding = input_file.encode_file(&args[5], &args[4]);
 
+    // Check success!
+    match encoding {
+        Ok(_) => {
+            println!("Encoding.....SUCCESS");
+
+            // In case of success (I hope so!!), write encoded result into new file
             let writing = input_file.write_to_file(&args[3]);
             match writing {
-                Ok(_) => println!("Writing......SUCCESS"),
+                // Then check success, again
+                Ok(_) => {
+                    println!("Writing......SUCCESS");
+                    process::exit(0);
+                }
                 Err(error) => {
                     println!("Writing......ERROR : {}", error);
-                    process::exit(1);
                 }
             }
-        }
-        "DECODE" => {
-            let output_file = DotMatrix::new(&args[2]);
 
-            let decoding = output_file.decode_file(&args[3], &args[4]);
-            match decoding {
-                Ok(_) => println!("Decoding.....SUCCESS"),
-                Err(error) => {
-                    println!("Decoding.....ERROR : {}", error);
-                    process::exit(1);
-                }
-            }
-        }
-        _ => {
-            print_usage();
+        },
+        Err(error) => {
+            println!("Encoding.....ERROR : {}", error);
         }
     }
+}
+
+/// Sub main, for decoding mode
+fn main_sub_decode(args: &Vec<String>) {
+    // Check input arguments number
+    if args.len() != 5 {
+        print_usage(Usage::DECODE);
+    }
+
+    // Initialize dot matrix from input file
+    let output_file = DotMatrix::new(&args[2]);
+
+    // Decode input file within matrix
+    let decoding = output_file.decode_file(&args[3], &args[4]);
+
+    // Check success
+    match decoding {
+        Ok(_) => {
+            println!("Decoding.....SUCCESS");
+            process::exit(0);
+        }
+        Err(error) => {
+            println!("Decoding.....ERROR : {}", error);
+        }
+    }
+}
+
+/// MAIN
+fn main() {
+    // Collect input arguments into vector
+    let args: Vec<String> = env::args().collect();
+
+    // If user just called stagano without any arguments
+    // display full usage message
+    if args.len() < 2 {
+        print_usage(Usage::FULL);
+    }
+
+    // Analyse first argument
+    match (&args[1]).as_str() {
+        "ENCODE" => {
+            main_sub_encode(&args);
+        }
+        "DECODE" => {
+            main_sub_decode(&args);
+        }
+        _ => {
+            print_usage(Usage::FULL);
+        }
+    }
+
+    // Ciao!
+    process::exit(1);
 }

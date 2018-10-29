@@ -1,3 +1,4 @@
+//! Module handling dot-matrix inner content manipulations
 pub mod dot_matrix {
 
     extern crate image;
@@ -445,6 +446,7 @@ pub mod dot_matrix {
         message.push(ENDING_CHAR as u8);
     }
 
+    /// Move cursor to next pixel (And automatically take bounds into account)
     fn move_cursor_to_next_pixel(
         x: &mut u32,
         y: &mut u32,
@@ -467,6 +469,7 @@ pub mod dot_matrix {
         }
     }
 
+    /// Write bits from vector to dot matrix
     fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
         vector: &mut Vec<bool>,
         bool_triplet: &[bool; 3],
@@ -478,13 +481,14 @@ pub mod dot_matrix {
         }
     }
 
-    /// Traits implementation
+    /// Trait implementation
     impl Clone for DotMatrix {
         fn clone(&self) -> DotMatrix {
             DotMatrix::new(self.get_input_filepath().as_str())
         }
     }
 
+    /// Trait implementation
     impl fmt::Display for DotMatrix {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(

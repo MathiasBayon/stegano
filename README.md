@@ -12,7 +12,8 @@
 * Add graphical interface
 * Add logging utility
 * Add UTF8 multi-byte character handling
-* Refactor multi)-conversions from arrays to vecs and vice-versa
+* Refactor multi-conversions from arrays to vecs and vice-versa
+* Refactor modules import
 * Add multi-threading
 * Add code doc
 * Improve cyphering

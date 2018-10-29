@@ -1,4 +1,4 @@
-// encrypt and decrypt methods created from examples available in rust-crypto Github page
+//! encrypt and decrypt methods created from examples available in rust-crypto Github page
 pub mod cypher {
     extern crate crypto;
 
