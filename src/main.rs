@@ -1,7 +1,7 @@
 //! MAIN
 pub mod lib;
 
-use self::lib::dot_matrix::dot_matrix::DotMatrix;
+use self::lib::dot_matrix::DotMatrix;
 use std::{env, process};
 
 // Enum used to display usage depending on first argument entered by user
@@ -25,7 +25,7 @@ fn print_usage(mode: Usage) {
 }
 
 /// Sub main, for encoding mode
-fn main_sub_encode(args: &Vec<String>) {
+fn main_sub_encode(args: &[String]) {
     // Check input arguments number
     if args.len() != 6 {
         print_usage(Usage::ENCODE);
@@ -63,7 +63,7 @@ fn main_sub_encode(args: &Vec<String>) {
 }
 
 /// Sub main, for decoding mode
-fn main_sub_decode(args: &Vec<String>) {
+fn main_sub_decode(args: &[String]) {
     // Check input arguments number
     if args.len() != 5 {
         print_usage(Usage::DECODE);

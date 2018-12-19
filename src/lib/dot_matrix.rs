@@ -1,7 +1,5 @@
 //! Module handling dot-matrix inner content manipulations
-pub mod dot_matrix {
-
-    extern crate image;
+extern crate image;
     use self::image::{DynamicImage, GenericImage, ImageError, Pixel};
 
     use std::{fmt, str};
@@ -12,9 +10,8 @@ pub mod dot_matrix {
     use std::io::prelude::*;
     use std::io::BufReader;
 
-    use lib::binary::{binary, binary::Byte};
-
-    use lib::cypher::cypher;
+    use lib::binary::*;
+    use lib::cypher::*;
 
     // TODO : put this in external file, or as input parameter
     const ENDING_CHAR: char = '~';
@@ -97,7 +94,7 @@ pub mod dot_matrix {
             // Then binary-OR it with the boolean input values
             // If the end of the encryption message is reached,
             // then the bit array may have less than 3 elements, so, store what is storable
-            if bits.len() >= 1 {
+            if !bits.is_empty() {
                 red.store_bit(bits[0]);
             }
             if bits.len() >= 2 {
@@ -144,21 +141,9 @@ pub mod dot_matrix {
 
             // Use modulo to know whether value is odd or not
             Ok([
-                if pixel.to_rgb()[0] % 2 == 0 {
-                    false
-                } else {
-                    true
-                },
-                if pixel.to_rgb()[1] % 2 == 0 {
-                    false
-                } else {
-                    true
-                },
-                if pixel.to_rgb()[2] % 2 == 0 {
-                    false
-                } else {
-                    true
-                },
+                pixel.to_rgb()[0] % 2 != 0,
+                pixel.to_rgb()[1] % 2 != 0,
+                pixel.to_rgb()[2] % 2 != 0,
             ])
         }
 
@@ -218,10 +203,7 @@ pub mod dot_matrix {
                     ]),
                 );
 
-                match move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)) {
-                    Ok(_) => true,
-                    Err(_) => false,
-                }
+                move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)).is_ok()
             } {}
 
             Ok(())
@@ -238,13 +220,13 @@ pub mod dot_matrix {
 
         /// Encode given message in self image
         pub fn encode(&mut self, message: &str, password: &str) -> Result<(), Error> {
-            if !binary::is_one_byte_chars_message(message) {
+            if !is_one_byte_chars_message(message) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
                     "Input message must be 1 byte chars",
                 ));
             }
-            if !binary::is_one_byte_chars_message(password) {
+            if !is_one_byte_chars_message(password) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
                     "Input password must be 1 byte chars",
@@ -258,12 +240,12 @@ pub mod dot_matrix {
             }
 
             // Add ending character to input message
-            let mut encrypted_message = cypher::simple_encrypt(message, password)?;
+            let mut encrypted_message = simple_encrypt(message, password)?;
 
             add_ending_char(&mut encrypted_message);
 
             // Convert message to binary vector
-            let vector = binary::convert_byte_vec_to_bit_vec(&binary::convert_u8_vec_to_byte_vec(
+            let vector = convert_byte_vec_to_bit_array(&convert_u8_vec_to_byte_array(
                 &encrypted_message,
             ));
 
@@ -312,10 +294,7 @@ pub mod dot_matrix {
 
                 parsing_cursor += 3;
 
-                match move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)) {
-                    Ok(_) => true,
-                    Err(_) => false,
-                } // Error seems to be here !
+                move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)).is_ok() // Error seems to be here !
             } {}
 
             Err(Error::new(
@@ -333,7 +312,7 @@ pub mod dot_matrix {
 
         /// Decodes image and return result string
         pub fn decode(&self, password: &str) -> Result<String, Error> {
-            if !binary::is_one_byte_chars_message(password) {
+            if !is_one_byte_chars_message(password) {
                 return Err(Error::new(
                     ErrorKind::InvalidInput,
                     "Input password must be 1 byte chars",
@@ -367,37 +346,37 @@ pub mod dot_matrix {
                 if boolean_byte_vector.len() == 6 {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwrapped,
+                        bool_triplet_unwrapped,
                         0,
                         1,
                     );
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut remains_of_previous_bit_vector,
-                        &bool_triplet_unwrapped,
+                        bool_triplet_unwrapped,
                         2,
                         2,
                     );
                 } else if boolean_byte_vector.len() == 7 {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwrapped,
+                        bool_triplet_unwrapped,
                         0,
                         0,
                     );
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut remains_of_previous_bit_vector,
-                        &bool_triplet_unwrapped,
+                        bool_triplet_unwrapped,
                         1,
                         2,
                     );
                 } else if boolean_byte_vector.len() == 8 {
                     // Complete byte formed!
                     // Convert byte to character
-                    charac = Byte::from_bool_vec(&boolean_byte_vector)?.get_value();
+                    charac = Byte::from_bool_array(&boolean_byte_vector)?.get_value();
 
                     // Check if read character is the ending one
                     if charac == ENDING_CHAR as u8 {
-                        match cypher::simple_decrypt(&message, password) {
+                        match simple_decrypt(&message, password) {
                             Ok(str_str) => return Ok(str_str.to_owned()),
                             Err(err) => {
                                 return Err(Error::new(ErrorKind::InvalidData, err.to_string()))
@@ -414,7 +393,7 @@ pub mod dot_matrix {
 
                         push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                             &mut boolean_byte_vector,
-                            &bool_triplet_unwrapped,
+                            bool_triplet_unwrapped,
                             0,
                             2,
                         );
@@ -422,16 +401,13 @@ pub mod dot_matrix {
                 } else {
                     push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
                         &mut boolean_byte_vector,
-                        &bool_triplet_unwrapped,
+                        bool_triplet_unwrapped,
                         0,
                         2,
                     );
                 }
 
-                match move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)) {
-                    Ok(_) => true,
-                    Err(_) => false,
-                }
+                move_cursor_to_next_pixel(&mut x, &mut y, (max_x, max_y)).is_ok()
             } {}
 
             Err(Error::new(
@@ -472,11 +448,11 @@ pub mod dot_matrix {
     /// Write bits from vector to dot matrix
     fn push_bits_in_vector_from_bool_triplet_from_n_up_to_m(
         vector: &mut Vec<bool>,
-        bool_triplet: &[bool; 3],
+        bool_triplet: [bool; 3],
         n: usize,
         m: usize,
     ) {
-        for i in n..m + 1 {
+        for i in n..=m {
             vector.push(bool_triplet[i]);
         }
     }
@@ -503,12 +479,11 @@ pub mod dot_matrix {
             )
         }
     }
-}
 
 // Tests
 #[cfg(test)]
 pub mod tests {
-    use super::dot_matrix::DotMatrix;
+    use super::*;
     use std::{
         fs::{self, File}, io::{Read, Write}, process,
     };
@@ -564,7 +539,7 @@ pub mod tests {
             process::exit(1);
         });
 
-        file.write_all("Test message within file".as_bytes())
+        file.write_all(b"Test message within file")
             .unwrap_or_else(|err| {
                 eprintln!("Error in test_global: {}", err);
                 process::exit(1);
@@ -589,7 +564,8 @@ pub mod tests {
 
         let image2 =
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test_global.png");
-        let _ = image2
+        
+        image2
             .decode_file(
                 "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt",
                 "Password",
