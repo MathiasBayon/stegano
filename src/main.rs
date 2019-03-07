@@ -73,7 +73,7 @@ fn main_sub_decode(args: &[String]) {
     let output_file = DotMatrix::new(&args[2]);
 
     // Decode input file within matrix
-    let decoding = output_file.decode_file(&args[3], &args[4]);
+    let decoding = output_file.decode_and_write(&args[3], &args[4]);
 
     // Check success
     match decoding {

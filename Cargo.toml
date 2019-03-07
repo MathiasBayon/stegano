@@ -1,14 +1,14 @@
 [package]
-name        = "stegano"
-version     = "1.0.1"
-authors     = ["Mathias Bayon <mathias.bayon@gmail.com>"]
-description = "A simple steganographic utility"
-license     = "MIT/Apache-2.0"
+name            = "stegano"
+version         = "1.0.1"
+authors         = ["Mathias Bayon <mathias.bayon@gmail.com>"]
+description     = "A simple steganographic utility"
+license         = "MIT/Apache-2.0"
 
 [dependencies]
-rand        = "*"
-image       = "*"
-rust-crypto = "*"
+rand            = "*"
+image           = "*"
+rust-crypto     = "*"
 
 [profile.dev]
-opt-level   = 3
+opt-level       = 3

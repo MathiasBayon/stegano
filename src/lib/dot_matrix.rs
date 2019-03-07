@@ -1,6 +1,6 @@
 //! Module handling dot-matrix inner content manipulations
 extern crate image;
-    use self::image::{DynamicImage, GenericImage, ImageError, Pixel};
+    use self::image::{DynamicImage, GenericImage, ImageError, Pixel, GenericImageView};
 
     use std::{fmt, str};
 
@@ -303,8 +303,8 @@ extern crate image;
             )) // Should not happen
         }
 
-        /// Decodes image and return result file
-        pub fn decode_file(&self, filepath: &str, password: &str) -> Result<(), Error> {
+        /// Decodes image and write result file
+        pub fn decode_and_write(&self, filepath: &str, password: &str) -> Result<(), Error> {
             let decoded_string = &self.decode(password)?;
             let mut output_file = File::create(filepath)?;
             output_file.write_all(decoded_string.as_bytes())
@@ -566,7 +566,7 @@ pub mod tests {
             DotMatrix::new("/Users/mathias/Documents/Devs/Rust/stegano/test_files/test_global.png");
         
         image2
-            .decode_file(
+            .decode_and_write(
                 "/Users/mathias/Documents/Devs/Rust/stegano/test_files/test2.txt",
                 "Password",
             )
