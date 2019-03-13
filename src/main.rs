@@ -29,6 +29,7 @@ fn main_sub_encode(args: &[String]) {
     // Check input arguments number
     if args.len() != 6 {
         print_usage(Usage::ENCODE);
+        return;
     }
 
     // Initialize dot matrix from input file
@@ -67,6 +68,7 @@ fn main_sub_decode(args: &[String]) {
     // Check input arguments number
     if args.len() != 5 {
         print_usage(Usage::DECODE);
+        return;
     }
 
     // Initialize dot matrix from input file
@@ -79,7 +81,6 @@ fn main_sub_decode(args: &[String]) {
     match decoding {
         Ok(_) => {
             println!("Decoding.....SUCCESS");
-            process::exit(0);
         }
         Err(error) => {
             println!("Decoding.....ERROR : {}", error);
@@ -96,6 +97,7 @@ fn main() {
     // display full usage message
     if args.len() < 2 {
         print_usage(Usage::FULL);
+        process::exit(1);
     }
 
     // Analyse first argument
