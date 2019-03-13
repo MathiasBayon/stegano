@@ -18,7 +18,7 @@ fn print_usage(mode: Usage) {
         Usage::FULL =>
             println!("Usage stegano <ENCODE / DECODE> <input file path> <output file path> <password> [<ASCII file to encode, if encoding>]"),
         Usage::ENCODE =>
-            println!("Usage stegano ENCODE <input file path> <output file path> <password>"),
+            println!("Usage stegano ENCODE <input file path> <output file path> <password> <ASCII file to encode>"),
         Usage::DECODE =>
             println!("Usage stegano DECODE <input file path> <output file path> <password>"),
     }
@@ -101,7 +101,7 @@ fn main() {
     }
 
     // Analyse first argument
-    match (&args[1]).as_str() {
+    match (&args[1]).to_uppercase().as_str() {
         "ENCODE" => {
             main_sub_encode(&args);
         }
