@@ -5,6 +5,8 @@
 		}
 	],
 	"settings": {
-		"rust-client.channel": "nightly"
+		"rust-client.channel": "stable",
+		"rust-client.updateOnStartup": true,
+		"rust.all_features": true
 	}
 }

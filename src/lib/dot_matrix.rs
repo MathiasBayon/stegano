@@ -10,8 +10,8 @@ extern crate image;
     use std::io::prelude::*;
     use std::io::BufReader;
 
-    use lib::binary::*;
-    use lib::cypher::*;
+    use super::binary::*;
+    use super::cypher::*;
 
     // TODO : put this in external file, or as input parameter
     const ENDING_CHAR: char = '~';
