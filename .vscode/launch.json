@@ -5,11 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug",
-            "type": "lldb-mi",
+            "type": "lldb",
             "request": "launch",
-            "target": "./target/debug/stegano",
-            "cwd": "${workspaceRoot}"
+            "name": "Debug executable 'stegano'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=stegano",
+                    "--package=stegano"
+                ],
+                "filter": {
+                    "name": "stegano",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'stegano'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=stegano",
+                    "--package=stegano"
+                ],
+                "filter": {
+                    "name": "stegano",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
