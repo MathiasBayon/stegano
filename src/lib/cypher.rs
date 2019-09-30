@@ -68,7 +68,8 @@ fn encrypt(
             write_buffer
                 .take_read_buffer()
                 .take_remaining()
-                .iter().cloned(),
+                .iter()
+                .cloned(),
         );
 
         match result {
@@ -106,7 +107,8 @@ fn decrypt(
             write_buffer
                 .take_read_buffer()
                 .take_remaining()
-                .iter().cloned(),
+                .iter()
+                .cloned(),
         );
         match result {
             BufferResult::BufferUnderflow => break,
@@ -138,12 +140,13 @@ pub fn simple_encrypt(message: &str, password: &str) -> Result<Vec<u8>, Error> {
 
     bcrypt_pbkdf(password.as_bytes(), b"salt", 2, &mut pass_256);
 
-    match encrypt(&message.as_bytes(), &pass_256, &iv) {
-        Ok(ok) => Ok(ok),
-        Err(_) => Err(Error::new(
+    if let Ok(ok) = encrypt(&message.as_bytes(), &pass_256, &iv) {
+        Ok(ok)
+    } else {
+        Err(Error::new(
             ErrorKind::Other,
             "stegano/simple_encrypt : Unable to encrypt message!",
-        )),
+        ))
     }
 }
 
@@ -168,18 +171,20 @@ pub fn simple_decrypt(vector: &[u8], password: &str) -> Result<String, Error> {
 
     bcrypt_pbkdf(password.as_bytes(), b"salt", 2, &mut pass_256);
 
-    match decrypt(vector, &pass_256, &iv) {
-        Ok(decrypted_message) => match str::from_utf8(decrypted_message.as_slice()) {
-            Ok(decrypted_message_as_str) => Ok(decrypted_message_as_str.to_string()),
-            Err(_) => Err(Error::new(
+    if let Ok(decrypted_message) = decrypt(vector, &pass_256, &iv) {
+        if let Ok(decrypted_message_as_str) = str::from_utf8(decrypted_message.as_slice()) {
+            Ok(decrypted_message_as_str.to_string())
+        } else {
+            Err(Error::new(
                 ErrorKind::InvalidData,
                 "stegano/simple_decrypt : Unable to convert decrypted message to UTF8",
-            )),
-        },
-        Err(_) => Err(Error::new(
+            ))
+        }
+    } else {
+        Err(Error::new(
             ErrorKind::InvalidData,
             "stegano/simple_decrypt : Unable to decrypt message",
-        )),
+        ))
     }
 }
 

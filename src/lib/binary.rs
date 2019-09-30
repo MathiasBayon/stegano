@@ -43,9 +43,8 @@ impl Byte {
 
     /// Sets the least significant bit to 0 (input parameter)
     pub fn empty_least_significant_bit(&mut self) {
-        match self.value % 2 {
-            1 => self.value -= 1, // Minus one to set it empty
-            0 | _ => {}           // Already empty ;-)
+        if self.value % 2 == 1 {
+            self.value -= 1 // Minus one to set it empty, do nothing if already empty
         }
     }
 
@@ -76,10 +75,7 @@ impl Byte {
     pub fn to_bit_vec(&self) -> Vec<bool> {
         self.to_string()
             .chars()
-            .map(|c| match c {
-                '1' => true,
-                _ => false,
-            })
+            .map(|c| c == '1')
             .collect()
     }
 

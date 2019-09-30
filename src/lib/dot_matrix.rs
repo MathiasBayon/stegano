@@ -34,9 +34,10 @@ impl DotMatrix {
 
     /// Accessor returning picture dimensions as a tuple pixel
     pub fn get_dimensions(&self) -> (u32, u32) {
-        match self.image {
-            Ok(ref image) => image.dimensions(),
-            Err(_) => (0, 0),
+        if let Ok(ref image) = self.image {
+            image.dimensions()
+        } else {
+            (0, 0)
         }
     }
 
@@ -54,18 +55,20 @@ impl DotMatrix {
     /// Function to write the picture into target file
     /// TODO : refactor
     pub fn write_to_file(&self, filepath: &str) -> Result<(), Error> {
-        match &self.image {
-            Ok(ref image_inner) => match image_inner.save(filepath) {
-                Ok(_) => Ok(()),
-                Err(_) => Err(Error::new(
+        if let Ok(ref image_inner) = &self.image {
+            if let Ok(()) = image_inner.save(filepath) {
+                Ok(())
+            } else {
+                Err(Error::new(
                     ErrorKind::InvalidInput,
                     "stegano/write_to_file : Unable to save output file!",
-                )),
-            },
-            Err(_) => Err(Error::new(
+                ))
+            }
+        } else {
+            Err(Error::new(
                 ErrorKind::InvalidData,
                 "stegano/write_to_file : Unable to open inner image!",
-            )),
+            ))
         }
     }
 
@@ -75,14 +78,13 @@ impl DotMatrix {
         let ref mut image_unwrapped;
         let pixel;
 
-        match self.image {
-            Ok(ref mut image_unwrapped_temp) => image_unwrapped = image_unwrapped_temp,
-            Err(_) => {
-                return Err(Error::new(
-                    ErrorKind::InvalidData,
-                    "stegano/store_3bits_at : Unable to open inner image!",
-                ))
-            }
+        if let Ok(ref mut image_unwrapped_temp) = self.image {
+            image_unwrapped = image_unwrapped_temp
+        } else {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "stegano/store_3bits_at : Unable to open inner image!",
+            ));
         }
 
         pixel = image_unwrapped.get_pixel(x, y);
@@ -125,19 +127,16 @@ impl DotMatrix {
     fn get_3bits_at(&self, x: u32, y: u32) -> Result<[bool; 3], Error> {
         let pixel;
 
-        match &self.image {
-            Ok(ref image_unwrapped) => {
-                pixel = image_unwrapped.get_pixel(x, y);
-            }
-            Err(_) => {
-                return Err(Error::new(
-                    ErrorKind::InvalidInput,
-                    format!(
-                        "stegano/get_3bits_at : Unable to get pixel at coordinates ({},{})",
-                        x, y
-                    ),
-                ))
-            }
+        if let Ok(ref image_unwrapped) = &self.image {
+            pixel = image_unwrapped.get_pixel(x, y);
+        } else {
+            return Err(Error::new(
+                ErrorKind::InvalidInput,
+                format!(
+                    "stegano/get_3bits_at : Unable to get pixel at coordinates ({},{})",
+                    x, y
+                ),
+            ));
         }
 
         // Use modulo to know whether value is odd or not
@@ -168,14 +167,13 @@ impl DotMatrix {
         let image_unwrapped;
         let (max_x, max_y) = self.get_dimensions();
 
-        match self.image {
-            Ok(ref mut image_unwrapped_temp) => image_unwrapped = image_unwrapped_temp,
-            Err(_) => {
-                return Err(Error::new(
-                    ErrorKind::InvalidData,
-                    "stegano/store_random_from : Unable to open inner image!",
-                ))
-            }
+        if let Ok(ref mut image_unwrapped_temp) = self.image {
+            image_unwrapped = image_unwrapped_temp
+        } else {
+            return Err(Error::new(
+                ErrorKind::InvalidData,
+                "stegano/store_random_from : Unable to open inner image!",
+            ));
         }
 
         // Ensure to stays within picture boundaries
@@ -470,10 +468,7 @@ impl fmt::Display for DotMatrix {
             f,
             "Filepath: {} \n Contents: {} \n Dimensions : {:?}",
             self.get_input_filepath(),
-            match self.image {
-                Ok(_) => "Yes",
-                Err(_) => "Invalid content",
-            },
+            if let Ok(_) = self.image { "Yes" } else { "Invalid content" },
             self.get_dimensions()
         )
     }
